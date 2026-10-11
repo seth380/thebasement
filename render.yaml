@@ -1,0 +1,9 @@
+# One-click hosting on Render: New > Blueprint > pick this repo.
+services:
+  - type: web
+    name: thebasement
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz

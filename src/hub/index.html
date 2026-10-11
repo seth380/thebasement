@@ -20,6 +20,8 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
 .h-pill{font:700 13px var(--body);color:var(--ink);background:var(--cream);border:2px solid var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
 #h-hint{position:absolute;left:0;right:0;top:84px;text-align:center;font-size:13px;color:var(--cream);text-shadow:0 1px 3px #000;pointer-events:none;padding:0 16px}
 @media (pointer:coarse){#h-hint{display:none}}
+#h-emotes{display:flex;gap:6px;flex-basis:100%;justify-content:flex-end}
+#h-emotes .h-pill{font-size:17px;padding:4px 9px}
 #h-prompt{position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font:400 20px var(--display);padding:10px 18px;cursor:pointer;background:var(--mint);white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
 #h-toast{position:absolute;left:16px;right:16px;top:30%;text-align:center;font:400 clamp(24px,5vw,36px) var(--display);color:var(--sun);-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;pointer-events:none;text-wrap:balance}
 #h-stick{position:absolute;left:20px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:124px;height:124px;border-radius:50%;border:3px solid var(--cream);background:rgba(255,248,231,.18);display:none;touch-action:none}
@@ -81,6 +83,8 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
     <div id="h-btns">
       <button class="h-pill" id="h-b-look" type="button">Change look</button>
       <button class="h-pill" id="h-b-troph" type="button">Trophies</button>
+      <button class="h-pill" id="h-b-net" type="button" title="Copy an invite link" hidden></button>
+      <div id="h-emotes" hidden></div>
     </div>
     <div id="h-hint">W A S D or arrow keys to walk. Press E to use what you are standing next to.</div>
     <div id="h-toast"></div>

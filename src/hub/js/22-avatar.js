@@ -1,9 +1,8 @@
 /* ---------- avatar ---------- */
 let avatar=null;
-function buildAvatar(){
-  const keep=avatar?{x:avatar.g.position.x,z:avatar.g.position.z}:null;
-  if(avatar)scene.remove(avatar.g);
-  const sp=SPECIES[av.species],cr=makeCritter({kind:sp.kind,head:sp.head,color:av.color},{shadow:true,map:fabricTex}),g=cr.g,head=cr.head,legs=cr.legs,arms=cr.arms;
+/* builds a character from a look {name,species,color,hat}; used for you and for everyone else online */
+function makeAvatarModel(av){
+  const sp=SPECIES[av.species]||SPECIES[0],cr=makeCritter({kind:sp.kind,head:sp.head,color:av.color},{shadow:true,map:fabricTex}),g=cr.g,head=cr.head,legs=cr.legs,arms=cr.arms;
   const hat=new THREE.Group();hat.position.y=0.1;head.add(hat);
   const dome=(r,m)=>{const d=sh(new THREE.Mesh(new THREE.SphereGeometry(r,18,10,0,Math.PI*2,0,Math.PI/2),m));hat.add(d);return d;};
   if(av.hat===1){dome(0.282,S(0x2a2540,0.8));box(0.3,0.02,0.2,S(0x2a2540,0.8),0,0.03,0.3,hat);}
@@ -14,8 +13,12 @@ function buildAvatar(){
   let tag=null;
   if(av.name){const t=mk(256,64,(c,w,h)=>{c.fillStyle='rgba(29,22,64,.78)';c.beginPath();c.rect(0,6,w,h-12);c.fill();c.font='900 34px Nunito,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle='#fff8e7';c.fillText(av.name,w/2,h/2+1);},true);
     tag=new THREE.Sprite(new THREE.SpriteMaterial({map:t,toneMapped:false,depthWrite:false}));tag.scale.set(0.56,0.14,1);tag.position.y=1.72+(av.hat>2?0.22:0);g.add(tag);}
-  scene.add(g);
-  avatar={g:g,legs:legs,arms:arms,head:head};
+  return {g:g,legs:legs,arms:arms,head:head};
+}
+function buildAvatar(){
+  const keep=avatar?{x:avatar.g.position.x,z:avatar.g.position.z}:null;
+  if(avatar)scene.remove(avatar.g);
+  avatar=makeAvatarModel(av);const g=avatar.g;scene.add(g);
   if(keep)g.position.set(keep.x,0,keep.z);
 }
 const P={x:0,z:-2.6,h:Math.PI,phase:0,move:0};
