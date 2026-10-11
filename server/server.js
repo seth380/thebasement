@@ -6,7 +6,7 @@ const {WebSocketServer}=require('ws');
 const PORT=process.env.PORT||8080;
 const DIST=path.join(__dirname,'..','dist');
 const MAX_ROOM=12,MAX_ROOMS=200,TICK_MS=100,MAX_MSGS_PER_SEC=40;
-const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.mp3':'audio/mpeg','.ogg':'audio/ogg','.wav':'audio/wav','.json':'application/json','.glb':'model/gltf-binary','.ico':'image/x-icon'};
+const TYPES={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.mp3':'audio/mpeg','.ogg':'audio/ogg','.wav':'audio/wav','.json':'application/json','.glb':'model/gltf-binary','.gltf':'model/gltf+json','.bin':'application/octet-stream','.ico':'image/x-icon'};
 
 const server=http.createServer((req,res)=>{
   let p=decodeURIComponent((req.url||'/').split('?')[0]);
@@ -25,7 +25,7 @@ const rooms=new Map();let nextId=1;
 const num=(v,lo,hi,d)=>(typeof v==='number'&&isFinite(v))?Math.max(lo,Math.min(hi,v)):d;
 const cleanName=s=>(typeof s==='string'?s:'').replace(/[^\p{L}\p{N} _\-]/gu,'').trim().slice(0,12);
 const cleanRoom=s=>((typeof s==='string'?s:'').toLowerCase().replace(/[^a-z0-9\-]/g,'').slice(0,16))||'main';
-const cleanLook=a=>{a=a&&typeof a==='object'?a:{};return {species:num(a.species,0,3,0)|0,color:num(a.color,0,0xffffff,0xff7a1a)|0,hat:num(a.hat,0,5,0)|0};};
+const cleanLook=a=>{a=a&&typeof a==='object'?a:{};return {species:num(a.species,0,3,0)|0,color:num(a.color,0,0xffffff,0xff7a1a)|0,hat:num(a.hat,0,5,0)|0,model:(typeof a.model==='string'&&/^[a-z0-9-]{0,40}$/.test(a.model))?a.model:''};};
 const cleanStatus=s=>(typeof s==='string'&&/^[a-z:]{0,20}$/.test(s))?s:'';
 const send=(ws,o)=>{if(ws.readyState===1)ws.send(JSON.stringify(o));};
 const others=(c,o)=>{const r=rooms.get(c.room);if(r)for(const p of r)if(p!==c)send(p.ws,o);};
