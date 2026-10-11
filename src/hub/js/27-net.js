@@ -49,10 +49,10 @@ function netConnect(){
   ws.onmessage=ev=>{
     let m;try{m=JSON.parse(ev.data);}catch(e){return;}
     if(m.t==='welcome'){NET.on=true;NET.id=m.id;NET.tries=0;[...NET.peers.keys()].forEach(netDropPeer);m.peers.forEach(netAddPeer);netCount();}
-    else if(m.t==='join'){netAddPeer(m.p);toast((m.p.name||'A guest')+' came downstairs');}
-    else if(m.t==='leave'){const p=NET.peers.get(m.id);if(p)toast(p.name+' went upstairs');netDropPeer(m.id);}
+    else if(m.t==='join'){SFX.play('join');netAddPeer(m.p);toast((m.p.name||'A guest')+' came downstairs');}
+    else if(m.t==='leave'){const p=NET.peers.get(m.id);if(p){SFX.play('leave');toast(p.name+' went upstairs');}netDropPeer(m.id);}
     else if(m.t==='av'){const p=NET.peers.get(m.id);if(p)netAddPeer({id:m.id,name:m.name,av:m.av,x:p.x,z:p.z,h:p.h,s:p.s});}
-    else if(m.t==='e'){const p=NET.peers.get(m.id);if(p)netSay(p.bub,EMOTES[m.k]||EMOTES[0],2.6);}
+    else if(m.t==='e'){const p=NET.peers.get(m.id);if(p){netSay(p.bub,EMOTES[m.k]||EMOTES[0],2.6);SFX.play('pluck',{vol:0.7,rate:1+m.k*0.12});}}
     else if(m.t==='full'){NET.tries=99;toast('That room is full');}
     else if(m.t==='s'){for(const a of m.p){const p=NET.peers.get(a[0]);if(!p)continue;p.tx=a[1];p.tz=a[2];p.th=a[3];p.tmv=a[4];p.s=a[5];}}
   };
@@ -66,7 +66,7 @@ function netConnect(){
 function netEmote(k){
   if(!NET.on)return;
   if(!NET.bub)NET.bub=netBubble();
-  netSay(NET.bub,EMOTES[k],2.6);netSend({t:'e',k:k});
+  SFX.play('pluck',{rate:1+k*0.12});netSay(NET.bub,EMOTES[k],2.6);netSend({t:'e',k:k});
 }
 /* runs on a timer, not in the frame loop, so friends still see what you are up to while you are inside a cabinet */
 setInterval(()=>{

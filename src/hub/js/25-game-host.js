@@ -18,11 +18,11 @@ function openGame(i){
   try{window.GAMES[m.id](root,api,win,f=>{if(!g.dead)requestAnimationFrame(f);},store);}catch(e){closeGame();toast('That cabinet would not start');return;}
   root.querySelectorAll('[data-exit]').forEach(b=>b.addEventListener('click',closeGame));
   leave.addEventListener('click',closeGame);
-  mode='game';
+  mode='game';hubAudioQuiet();SFX.play('start');
 }
 function closeGame(){
   if(!game)return;
-  const g=game;game=null;g.dead=true;g.ctl.abort();g.acs.forEach(a=>{try{a.close();}catch(e){}});
+  const g=game;game=null;g.dead=true;SFX.endGame();SFX.play('exit');g.ctl.abort();g.acs.forEach(a=>{try{a.close();}catch(e){}});
   const cv=g.root.querySelector('canvas');
   try{const gl=cv.getContext('webgl2')||cv.getContext('webgl');const ex=gl&&gl.getExtension('WEBGL_lose_context');if(ex)ex.loseContext();}catch(e){}
   g.root.remove();$('h-wrap').hidden=false;mode='walk';

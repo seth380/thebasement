@@ -11,7 +11,7 @@ function fbTick(dt){
   const b=FB.ball,sk=FBD[FB.diff][1];
   if(!FB.over){
     FB.u=Math.max(-1,Math.min(1,FB.u+((keys.down?1:0)-(keys.up?1:0))*2.4*dt));
-    if(FB.kickT>0)FB.kickT-=dt;
+    if(FB.kickT>0)FB.kickT-=dt;if(FB.sndT>0)FB.sndT-=dt;
     let ai=0;
     FB_RODS.forEach(r=>{
       const old=r.off;
@@ -28,12 +28,12 @@ function fbTick(dt){
         if(b.y<15){b.y=15;b.vy=Math.abs(b.vy);}if(b.y>325){b.y=325;b.vy=-Math.abs(b.vy);}
         const goal=Math.abs(b.y-170)<52;
         if(b.x<15&&!goal){b.x=15;b.vx=Math.abs(b.vx);}if(b.x>585&&!goal){b.x=585;b.vx=-Math.abs(b.vx);}
-        if(b.x<-4||b.x>604){const me=b.x>300;FB.score[me?0:1]++;
+        if(b.x<-4||b.x>604){const me=b.x>300;FB.score[me?0:1]++;SFX.play(me?'goal':'error');
           if(FB.score[me?0:1]>=5){FB.over=me?'You win!':'The computer wins.';const st=readJ('foos-stats');st[me?'w':'l']=(st[me?'w':'l']||0)+1;store.setItem('foos-stats',JSON.stringify(st));}
           else fbServe(me?-1:1);fbHud();foos.spin=1.2;return;}
         for(const r of FB_RODS)for(const m of r.base){const mx=r.x,my=170+m+r.off,dx=b.x-mx,dy=b.y-my,d=Math.hypot(dx,dy);
           if(d<17&&d>0.01){const nx=dx/d,ny=dy/d;b.x=mx+nx*17;b.y=my+ny*17;const dir=r.t?-1:1,pow=r.t?(225+Math.random()*90*sk):(FB.kickT>0?520:310);
-            b.vx=dir*Math.max(Math.abs(b.vx)*0.7,pow);b.vy=b.vy*0.5+r.voff*0.45+ny*(r.t?150:230);}}
+            if(!(FB.sndT>0)){FB.sndT=0.07;SFX.play('click2',{vol:Math.min(1,pow/420),rate:r.t?0.8:1,jitter:0.2});}b.vx=dir*Math.max(Math.abs(b.vx)*0.7,pow);b.vy=b.vy*0.5+r.voff*0.45+ny*(r.t?150:230);}}
       }
       const sp=Math.hypot(b.vx,b.vy);if(sp>640){b.vx*=640/sp;b.vy*=640/sp;}
       b.vx*=1-0.22*dt;b.vy*=1-0.22*dt;
@@ -54,6 +54,6 @@ function fbTick(dt){
 {const cv=$('h-foos-cv'),mv=e=>{const r=cv.getBoundingClientRect();FB.u=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height*2-1)*1.3));};
   cv.addEventListener('pointermove',mv);cv.addEventListener('pointerdown',e=>{e.preventDefault();mv(e);FB.kickT=0.3;});}
 diffRow('h-foos-diff',FBD,FB,'foos-diff');
-function openFoos(){$('h-foos').hidden=false;FB.on=true;if(FB.over||!(FB.score[0]+FB.score[1]))fbNew();fbHud();}
+function openFoos(){SFX.play('open');$('h-foos').hidden=false;FB.on=true;if(FB.over||!(FB.score[0]+FB.score[1]))fbNew();fbHud();}
 $('h-foos-new').addEventListener('click',fbNew);
 

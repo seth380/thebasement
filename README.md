@@ -18,7 +18,8 @@ A walk-around 3D basement in the browser. Arcade cabinets on the back wall launc
 src/hub/index.html   page shell, styles and panels for the basement
 src/hub/js/          the basement, one file per section, joined in name order
 src/games/           one self-contained page per cabinet (Fogbound Isle is in parts)
-src/shared/          character model and graphics helpers used by every game
+src/shared/          character model, graphics helpers and the sound engine used by every game
+assets/              sounds and vendored libraries; credits are in ASSETS.md
 tools/build.js       joins everything into dist/
 server/server.js     serves dist/ and runs the multiplayer rooms
 ```
@@ -49,4 +50,4 @@ The server is one small Node process that serves the game and relays positions o
 - `dist/index.html` is the full page the server serves, with multiplayer on.
 - `dist/basement-arcade.html` is the same game as a single-file fragment with multiplayer off.
 
-The 3D library (three.js r128) loads from cdnjs. Progress is saved in the browser under the `basement-v1` key.
+The served page uses the copy of three.js in `assets/vendor`; the single-file build loads it from cdnjs and has no sample files, so it plays simple synthesized sounds instead. Progress is saved in the browser under the `basement-v1` key.

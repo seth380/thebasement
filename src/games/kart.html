@@ -422,7 +422,7 @@ function toast(s){$('toast').textContent=s;toastT=1.8;}
 function big(s,d){$('big').textContent=s;bigT=d;}
 
 /* ---------- sound ---------- */
-let ac=null,eng,engGain,master,soundOn=true;
+let ac=null,eng,engGain,master,soundOn=true,sfxEng=null,sfxSkid=null;
 function initAudio(){
   if(ac){if(ac.state==='suspended')ac.resume();return;}
   try{
@@ -448,7 +448,7 @@ function crossed(k){
   if(k.lap<=k.maxLap) return;
   k.maxLap=k.lap;
   if(k.lap>ev.laps&&!k.finished){k.finished=++finishCount;if(k.isPlayer)finishPlayer();return;}
-  if(k.isPlayer&&k.lap>1){lapTimes.push(raceT-lapStart);lapStart=raceT;toast(k.lap===ev.laps?'Final lap!':'Lap '+k.lap+'  ·  '+fmt(lapTimes[lapTimes.length-1]));beep(660,0.15);}
+  if(k.isPlayer&&k.lap>1){lapTimes.push(raceT-lapStart);lapStart=raceT;SFX.play('confirm',{game:true});toast(k.lap===ev.laps?'Final lap!':'Lap '+k.lap+'  ·  '+fmt(lapTimes[lapTimes.length-1]));beep(660,0.15);}
 }
 function finishPlayer(){
   lapTimes.push(raceT-lapStart);
@@ -467,6 +467,7 @@ function finishPlayer(){
   $('laps').innerHTML=lapTimes.map((t,n)=>'<li>Lap '+(n+1)+': '+fmt(t)+'</li>').join('');
   $('bestres').textContent='Best race '+fmt(b.total)+'  ·  Best lap '+fmt(b.lap)+'  ·  Best finish '+ORD[b.place-1];
   big(k.finished===1?'Winner!':'Finish!',2);
+  SFX.play('win',{game:true,delay:0.5});
   [523,659,784,1047].forEach((f,n)=>setTimeout(()=>beep(f,0.25,'triangle',0.1),n*130));
   setTimeout(()=>{if(state==='done')$('results').hidden=false;},1700);
 }
@@ -498,7 +499,7 @@ function bumpRivals(k){karts.forEach(o=>{if(o===k)return;const dx=k.x-o.x,dz=k.z
   if(d<3.4&&d>0.01&&Math.abs(dy)<3){k.x+=dx/d*(3.4-d);k.z+=dz/d*(3.4-d);k.speed*=0.985;k.vx*=0.985;k.vz*=0.985;}});}
 function padCheck(k,lat){
   for(const p of PADS){let dd=Math.abs(k.idx-p);dd=Math.min(dd,N-dd);
-    if(dd<=3&&Math.abs(lat)<6&&k.boost<1.2){k.boost=1.6;beep(300,0.45,'sawtooth',0.06,1200);toast('Boost!');}}
+    if(dd<=3&&Math.abs(lat)<6&&k.boost<1.2){k.boost=1.6;beep(300,0.45,'sawtooth',0.06,1200);toast('Boost!');if(k.isPlayer)SFX.burst(300,3200,0.6,0.22,{game:true});}}
 }
 function wrongWay(k){const bi=k.idx;if(Math.sin(k.h)*T[bi].x+Math.cos(k.h)*T[bi].z<-0.3&&Math.abs(k.speed)>6&&toastT<0.2)toast('Wrong way!');}
 function updKart(k,dt){
@@ -573,7 +574,7 @@ function updPlane(k,dt){
   bumpRivals(k);track(k,true);
   k.pv=k.pitch;k.roll=-k.steer*0.75;
   if(RINGS.length){const r=RINGS[ringNext];let dd=k.idx-r.i;if(dd<-N/2)dd+=N;if(dd>N/2)dd-=N;
-    if(dd>=0){if(dd<14&&Math.hypot(k.x-S[r.i].x,k.y-S[r.i].y,k.z-S[r.i].z)<13){r.t=0.5;if(r.boost){k.boost=1.5;toast('Boost ring!');beep(300,0.45,'sawtooth',0.06,1200);}else beep(990,0.1,'triangle',0.08);}
+    if(dd>=0){if(dd<14&&Math.hypot(k.x-S[r.i].x,k.y-S[r.i].y,k.z-S[r.i].z)<13){r.t=0.5;if(r.boost){k.boost=1.5;toast('Boost ring!');SFX.burst(300,3200,0.6,0.22,{game:true});beep(300,0.45,'sawtooth',0.06,1200);}else{beep(990,0.1,'triangle',0.08);SFX.play('coin',{game:true});}}
       ringNext=(ringNext+1)%RINGS.length;}}
   wrongWay(k);
 }
@@ -658,7 +659,11 @@ function frame(now){
   }
   if(bigT>0){bigT-=dt;if(bigT<=0)$('big').textContent='';}
   if(toastT>0){toastT-=dt;if(toastT<=0)$('toast').textContent='';}
-  if(ac&&eng){eng.frequency.value=(plane?90:55)+Math.abs(ev.veh==='ski'?Math.hypot(p.vx,p.vz):p.speed)*2.3;engGain.gain.value=(state==='race')?0.03:0;}
+  if(ac&&eng){eng.frequency.value=(plane?90:55)+Math.abs(ev.veh==='ski'?Math.hypot(p.vx,p.vz):p.speed)*2.3;engGain.gain.value=(state==='race')?(SFX.has('engine')?0:0.03):0;}
+  {const sp=Math.abs(ev.veh==='ski'?Math.hypot(p.vx,p.vz):p.speed),run=state==='race';
+   if(!sfxEng&&SFX.ready){sfxEng=SFX.loop('engine',{game:true,vol:0});sfxSkid=SFX.loop('skid',{game:true,vol:0});}
+   if(sfxEng){sfxEng.vol(run?0.3+Math.min(0.25,sp/300):0);sfxEng.rate((plane?0.9:ev.veh==='ski'?0.75:0.6)+sp/(plane?90:60));
+    sfxSkid.vol(run&&ev.veh==='kart'&&sp>24&&Math.abs(p.steer)>0.6?Math.min(0.6,(sp-24)/40):0);}}
   {const q=state==='menu'?S[N-16]:p;sun.target.position.set(q.x,q.y,q.z);sun.position.set(q.x+60,q.y+120,q.z+40);
    sunGlow.position.set(camera.position.x+600,camera.position.y+1200,camera.position.z+400);sunHalo.position.copy(sunGlow.position);
    fxP.tick(dt,camera,renderer.domElement.height);fxA.tick(dt,camera,renderer.domElement.height);}
@@ -697,7 +702,7 @@ $('start').addEventListener('click',startRace);
 $('again').addEventListener('click',startRace);
 $('change').addEventListener('click',showMenu);
 $('rst').addEventListener('click',backOnTrack);
-$('snd').addEventListener('click',()=>{soundOn=!soundOn;$('snd').textContent=soundOn?'Sound on':'Sound off';if(master)master.gain.value=soundOn?1:0;});
+$('snd').addEventListener('click',()=>{soundOn=!soundOn;$('snd').textContent=soundOn?'Sound on':'Sound off';if(master)master.gain.value=soundOn?1:0;SFX.gameMute(!soundOn);});
 const KEYS={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',Space:'brake',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
 window.addEventListener('keydown',e=>{
   if(KEYS[e.code]){input[KEYS[e.code]]=true;e.preventDefault();}

@@ -13,7 +13,7 @@ function floorY(x){return x>-11?0:-3*Math.min(1,(-11-x)/6);}
   for(let k=0;k<5;k++){const y=0.03+k*0.455;box(0.34,0.03,1.4,wal,0.17,y,0.7,piv);if(k===4)break;let z=0.06;while(z<1.3){const w=0.03+rnd()*0.035,h=0.22+rnd()*0.14;box(0.22,h,w,S(pal[Math.floor(rnd()*8)],0.8),0.17,y+0.015+h/2,z+w/2,piv,true);z+=w+0.004;}}
   const odd=box(0.24,0.3,0.05,S(0xc0281e,0.6),0.25,1.1,0.72,piv);box(0.012,0.1,0.052,S(0xffc928,0.3,1),0.372,1.1,0.72,piv,true);
   sec.col={x0:-11,x1:-10.6,z0:SZ0,z1:SZ1,off:sec.open};colliders.push(sec.col);
-  things.push({x:-10.3,z:-6.5,r:1.35,text:'Pull the red book',cond:()=>!sec.open,fn:()=>{sec.open=true;sec.col.off=true;store.setItem('secret-open','1');toast('Something behind the bookcase clicks');}});
+  things.push({x:-10.3,z:-6.5,r:1.35,text:'Pull the red book',cond:()=>!sec.open,fn:()=>{SFX.play('switch');SFX.play('scrape',{delay:0.25,rate:0.6,vol:0.9});SFX.play('scrape',{delay:0.8,rate:0.5,vol:0.7});sec.open=true;sec.col.off=true;store.setItem('secret-open','1');toast('Something behind the bookcase clicks');}});
   [-1,1].forEach(k=>box(0.14,1.9,0.06,S(0x4a2f1c,0.55,0,{map:woodTex}),-11.05,0.95,k>0?SZ1+0.03:SZ0-0.03));
   /* stairwell */
   for(let i=0;i<12;i++)box(0.5,3.4,1.5,rock,-11.25-i*0.5,-(i+1)*0.25-1.7,-6.5,null,true);
@@ -52,7 +52,7 @@ function floorY(x){return x>-11?0:-3*Math.min(1,(-11-x)/6);}
   for(let i=0;i<26;i++){const c=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.012,10),gold);c.position.set((rnd()-0.5)*0.7,rnd()*0.08,(rnd()-0.5)*0.42);c.rotation.set(rnd()*1.2,rnd()*3,rnd()*1.2);sec.gold.add(c);}
   const gs=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffd060,transparent:true,opacity:0.8,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));gs.scale.set(2.2,2.2,1);gs.position.y=0.25;sec.gold.add(gs);
   sec.gold.visible=sec.chest;if(sec.chest)lid.rotation.x=-1.9;
-  things.push({x:cx,z:cz+0.6,r:1.6,text:()=>sec.chest?'The chest is open':'Open the old chest',fn:()=>{if(sec.chest){toast('Gold coins, and room for more secrets');return;}sec.chest=true;store.setItem('secret-chest','1');HATS.push('Explorer hat');toast('Gold, and an explorer’s hat. It is in your wardrobe now.');}});
+  things.push({x:cx,z:cz+0.6,r:1.6,text:()=>sec.chest?'The chest is open':'Open the old chest',fn:()=>{if(sec.chest){toast('Gold coins, and room for more secrets');return;}SFX.play('open',{rate:0.7});for(let i=0;i<5;i++)SFX.play('coin',{delay:0.35+i*0.13,rate:0.9+i*0.06});SFX.play('win',{delay:1.1});sec.chest=true;store.setItem('secret-chest','1');HATS.push('Explorer hat');toast('Gold, and an explorer’s hat. It is in your wardrobe now.');}});
 }
 function secTick(dt,t){
   const p=sec.piv;p.rotation.y+=((sec.open?1.7:0)-p.rotation.y)*Math.min(1,dt*1.6);

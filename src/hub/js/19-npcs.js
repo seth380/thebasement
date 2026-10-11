@@ -34,6 +34,6 @@ function npcTick(dt,t){
     else{c.arms[0].rotation.x=-sw*0.8;c.arms[1].rotation.x=sw*0.8;c.head.rotation.y=n.wait>0?Math.sin(t*0.7+n.phase)*0.35:0;}
   });
 }
-function npcTalk(n){n.said=(n.said+1)%n.lines.length;toast(n.name+': '+n.lines[n.said]);}
+function npcTalk(n){SFX.play('pluck',{rate:0.8+n.said*0.1});n.said=(n.said+1)%n.lines.length;toast(n.name+': '+n.lines[n.said]);}
 
 const glowTex=mk(128,128,(g,w,h)=>{const r=g.createRadialGradient(64,64,0,64,64,64);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(0.4,'rgba(255,255,255,.42)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,w,h);},true);

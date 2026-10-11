@@ -96,8 +96,9 @@ function chRender(){
   chSync(b);
 }
 function chNew(){chs.s=chInit();chs.legal=chLegal(chs.s);chs.sel=-1;chs.last=[];chs.over='';chRender();}
-function chEnd(r,why){chs.over=why;const st=readJ('chess-stats');st[r]=(st[r]||0)+1;store.setItem('chess-stats',JSON.stringify(st));}
+function chEnd(r,why){SFX.play(r==='w'?'win':r==='l'?'error':'bong',{delay:0.25});chs.over=why;const st=readJ('chess-stats');st[r]=(st[r]||0)+1;store.setItem('chess-stats',JSON.stringify(st));}
 function chCommit(m){
+  SFX.play(chs.s.b[m.t]?'remove':'place');
   const mover=chs.s.turn;chs.s=chMake(chs.s,m);chs.last=[m.f,m.t];chs.sel=-1;chs.legal=chLegal(chs.s);
   if(!chs.legal.length){if(chInCheck(chs.s))chEnd(mover===1?'w':'l',mover===1?'Checkmate. You win!':'Checkmate. The computer wins this one.');else chEnd('d','Stalemate. It is a draw.');}
   else if(chs.s.half>=100)chEnd('d','Draw: fifty moves without a capture or pawn move.');
@@ -114,7 +115,7 @@ $('h-chess-board').addEventListener('click',e=>{
 function diffRow(id,list,obj,key){list.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.id=id+i;b.textContent=d[0];b.setAttribute('aria-pressed',i===obj.diff);
   b.addEventListener('click',()=>{obj.diff=i;store.setItem(key,String(i));[].forEach.call($(id).children,(c,n)=>c.setAttribute('aria-pressed',n===i));});$(id).appendChild(b);});}
 diffRow('h-chess-diff',CHD,chs,'chess-diff');
-function openChess(){if(!chs.s)chNew();$('h-chess').hidden=false;chRender();}
+function openChess(){SFX.play('open');if(!chs.s)chNew();$('h-chess').hidden=false;chRender();}
 $('h-chess-new').addEventListener('click',chNew);
 chSync(chInit().b);
 

@@ -330,14 +330,14 @@ function bank(){
   const v=combo.base*combo.tricks.length;score+=v;if(v>bestCombo)bestCombo=v;
   $('cval').className='banked';$('cval').textContent='+'+num(v);cvalT=1.4;
   combo={tricks:[],base:0};
-  beep(784,0.12,'triangle',0.09);setTimeout(()=>beep(1047,0.2,'triangle',0.09),90);
+  SFX.play('tile_match',{game:true,vol:0.7});beep(784,0.12,'triangle',0.09);setTimeout(()=>beep(1047,0.2,'triangle',0.09),90);
 }
 function bail(){
   const had=combo.tricks.length;combo={tricks:[],base:0};
   $('cval').className='bail';$('cval').textContent=had?'Bail! Combo lost':'Bail!';cvalT=1.2;
   P.st='bail';P.bailT=1;P.flip=null;P.grabbing=false;P.spin=0;P.rail=null;
   P.speed=Math.min(6,Math.hypot(P.vx,P.vz));
-  beep(140,0.35,'sawtooth',0.08,60);
+  SFX.play('impact',{game:true,vol:0.8});beep(140,0.35,'sawtooth',0.08,60);
 }
 
 /* ---------- sound ---------- */
@@ -389,7 +389,7 @@ function land(){
   P.spin=0;P.grabbing=false;
   P.speed=Math.hypot(P.vx,P.vz);if(P.speed>0.5)P.h=Math.atan2(P.vx,P.vz);
   P.vyG=0;P.st='ground';P.crouch=0.75;
-  beep(110,0.1,'square',0.06,70);
+  SFX.play('land',{game:true});SFX.play('tile_land',{game:true,vol:0.5,rate:0.6});beep(110,0.1,'square',0.06,70);
   bank();
 }
 function tryRail(){
@@ -442,7 +442,7 @@ function step(dt){
     }
     if(nh<P.y-0.45){P.x=nx;P.z=nz;takeoff(P.vyG);}
     else{P.vyG=(nh-P.y)/dt;P.speed-=P.vyG*0.55*dt;P.x=nx;P.z=nz;P.y=nh;}
-    if(P.st==='ground'&&jumpBuf>0){jumpBuf=0;takeoff(Math.max(P.vyG,0)+jumpPow);if(popFlip)flipQ=popFlip;popFlip=null;beep(200,0.08,'square',0.06,420);}
+    if(P.st==='ground'&&jumpBuf>0){jumpBuf=0;takeoff(Math.max(P.vyG,0)+jumpPow);if(popFlip)flipQ=popFlip;popFlip=null;SFX.play('jump',{game:true,vol:0.8,jitter:0.1});beep(200,0.08,'square',0.06,420);}
   }
   if(P.st==='air'){
     P.vy-=G*dt;P.spin+=steer*5.6*dt;
@@ -472,7 +472,7 @@ function step(dt){
     P.x=r.x1+r.ux*P.rs;P.z=r.z1+r.uz*P.rs;P.y=r.y;
     if(out||jumpBuf>0){
       const j=jumpBuf>0;jumpBuf=0;P.coolRail=r;P.coolT=0.45;P.rail=null;
-      takeoff(j?jumpPow-0.5:0);if(j){if(popFlip)flipQ=popFlip;popFlip=null;beep(200,0.08,'square',0.06,420);}
+      takeoff(j?jumpPow-0.5:0);if(j){if(popFlip)flipQ=popFlip;popFlip=null;SFX.play('jump',{game:true,vol:0.8,jitter:0.1});beep(200,0.08,'square',0.06,420);}
     }
   }else if(P.st==='bail'){
     P.bailT-=dt;P.speed*=1-3*dt;
@@ -592,7 +592,7 @@ try{const c=parseInt(localStorage.getItem('ssp-skater'),10);if(c>=0&&c<SKATERS.l
 $('start').addEventListener('click',startRun);
 $('again').addEventListener('click',startRun);
 $('change').addEventListener('click',showMenu);
-$('snd').addEventListener('click',()=>{soundOn=!soundOn;$('snd').textContent=soundOn?'Sound on':'Sound off';if(master)master.gain.value=soundOn?1:0;});
+$('snd').addEventListener('click',()=>{soundOn=!soundOn;$('snd').textContent=soundOn?'Sound on':'Sound off';if(master)master.gain.value=soundOn?1:0;SFX.gameMute(!soundOn);});
 const KEYS={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',KeyL:'grab',KeyC:'grab'};
 window.addEventListener('keydown',e=>{
   if(KEYS[e.code]){input[KEYS[e.code]]=true;e.preventDefault();}
