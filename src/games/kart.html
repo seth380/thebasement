@@ -228,6 +228,21 @@ function instTrees(list,palette){
     d.position.y=t.y+12.5*t.s;d.updateMatrix();cone2.setMatrixAt(i,d.matrix);cone2.setColorAt(i,C(palette[(i+1)%3]));});
   balls.forEach((t,i)=>{d.rotation.y=rnd()*6;d.scale.setScalar(t.s);d.position.set(t.x,t.y+7.5*t.s,t.z);d.updateMatrix();ball.setMatrixAt(i,d.matrix);ball.setColorAt(i,C([0x35c46a,0x2bb673,0xff8fb3,0xffb347,0x49cf7c][Math.floor(rnd()*5)]));});
   world.add(trunk);if(pines.length)world.add(cone,cone2);if(balls.length)world.add(ball);
+  /* real trees from the nature kit when the page has them: pines, leafy trees, and a few red autumn ones for colour.
+     This game renders without colour correction, so the textures are read as-is to match its palette. */
+  const files=[1,2,3,4,5].map(n=>'nature/Pine_'+n+'.gltf').concat([1,2,3,4,5].map(n=>'nature/CommonTree_'+n+'.gltf'),[1,2,3].map(n=>'nature/TwistedTree_'+n+'.gltf'));
+  const items=list.map(t=>t.pine?{v:Math.floor(rnd()*5),x:t.x,y:t.y,z:t.z,ry:rnd()*6.28,h:16*t.s}:{v:rnd()<0.22?10+Math.floor(rnd()*3):5+Math.floor(rnd()*5),x:t.x,y:t.y,z:t.z,ry:rnd()*6.28,h:12.5*t.s});
+  const shadow=!lowFx;
+  GFX.scatter(files,items,world,{shadow:shadow,
+    mat:m=>{const c=m.clone();if(c.map){c.map=c.map.clone();c.map.encoding=THREE.LinearEncoding;c.map.needsUpdate=true;}c.envMapIntensity=0;
+      /* the canvas is see-through over a CSS sky, so leaf pixels that pass the cutout must be fully opaque or the sky shows through them */
+      /* textures are shown without colour correction here, so lift them to sit with the game's bright palette */
+      const leaf=c.alphaTest>0&&!/bark/i.test(c.name);c.color.setRGB(leaf?1.55:1.15,leaf?1.6:1.15,leaf?1.3:1.15);
+      /* the canvas is see-through over the page's sky, so cut-out pixels must write full opacity or the sky shows through */
+      const prev=m.onBeforeCompile,fol=m.customProgramCacheKey()==='foliage';
+      c.onBeforeCompile=(sh,r)=>{prev.call(c,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\n\tgl_FragColor.a=1.0;');};
+      c.customProgramCacheKey=()=>'kart-tree'+(fol?'-foliage':'');return c;},
+    done:()=>{trunk.visible=cone.visible=cone2.visible=ball.visible=false;}});
 }
 function clouds(n,y0,y1,near){
   const cm=new THREE.MeshBasicMaterial({color:0xffffff,fog:false});

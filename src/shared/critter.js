@@ -89,6 +89,49 @@ window.GFX=(function(){
     const e=mcache[file]={scene:null,q:[cb]};
     new THREE.GLTFLoader().load(base+'models/'+file,g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});e.scene=g.scene;e.q.forEach(f=>{try{f(g.scene.clone());}catch(err){}});e.q=[];},undefined,()=>{});
   }
+  /* Scatters many copies of a few models cheaply (one instanced mesh per model part).
+     files: ['nature/Pine_1.gltf', ...]; items: [{v: index into files, x, y (ground), z, ry, h (height in metres)}].
+     Waits until every file has loaded, then adds the meshes to parent and calls o.done(meshes); if any file fails
+     nothing is added, so the caller's own stand-in stays. o.mat(material, v) can swap materials to suit the scene. */
+  /* a copy of a leaf material that keeps the outward normals on both sides of each leaf card
+     (three.js normally flips them for the back face, which would put half the canopy in shade) */
+  function foliage(mat,mc){
+    const k='fol:'+mat.uuid;if(mc.has(k))return mc.get(k);
+    const c=mat.clone();
+    c.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('normal = normal * faceDirection;','');};
+    c.customProgramCacheKey=()=>'foliage';mc.set(k,c);return c;
+  }
+  function scatter(files,items,parent,o){
+    o=o||{};if(!window.BASEMENT_ASSETS||!THREE.GLTFLoader||!items.length)return;
+    const roots=[];let left=files.length;
+    files.forEach((f,v)=>model(f,r=>{roots[v]=r;if(--left===0)build();}));
+    function build(){
+      const d=new THREE.Object3D(),out=[],mc=new Map();
+      roots.forEach((root,v)=>{
+        const mine=items.filter(t=>t.v===v);if(!mine.length)return;
+        root.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(root),hgt=Math.max(0.001,box.max.y-box.min.y);
+        root.traverse(m=>{
+          if(!m.isMesh)return;
+          const geo=m.geometry.clone();geo.applyMatrix4(m.matrixWorld);geo.translate(0,-box.min.y,0);
+          let mat=m.material;
+          /* foliage: point each leaf's normal out from the middle of the canopy and a little up, so trees shade as soft
+             rounded shapes from every side instead of a dark jumble of leaf cards */
+          if(mat.alphaTest>0&&!/bark|trunk|wood/i.test(mat.name)&&geo.attributes.normal){
+            geo.computeBoundingBox();const c=geo.boundingBox.getCenter(new THREE.Vector3()),p=geo.attributes.position,n=geo.attributes.normal,t=new THREE.Vector3();
+            for(let i=0;i<p.count;i++){t.set(p.getX(i)-c.x,(p.getY(i)-c.y)*0.8,p.getZ(i)-c.z).normalize();t.y+=0.45;t.normalize();n.setXYZ(i,t.x,t.y,t.z);}
+            n.needsUpdate=true;mat=foliage(mat,mc);}
+          if(o.mat){const k=mat.uuid+':'+v;if(!mc.has(k))mc.set(k,o.mat(mat,v));mat=mc.get(k);}
+          const im=new THREE.InstancedMesh(geo,mat,mine.length);
+          mine.forEach((t,i)=>{d.position.set(t.x,t.y,t.z);d.rotation.set(0,t.ry||0,0);d.scale.setScalar(t.h/hgt);d.updateMatrix();im.setMatrixAt(i,d.matrix);});
+          /* cut-out foliage casts leaf-shaped shadows, and does not receive any (it would shade itself solid) */
+          const cut=mat.alphaTest>0;im.castShadow=!!o.shadow;im.receiveShadow=!!o.shadow&&!cut;
+          if(o.shadow&&cut)im.customDepthMaterial=new THREE.MeshDepthMaterial({depthPacking:THREE.RGBADepthPacking,map:mat.map,alphaTest:mat.alphaTest});
+          parent.add(im);out.push(im);
+        });
+      });
+      if(o.done)o.done(out);
+    }
+  }
   /* scales and centres a loaded model so its longest side is `size` */
   function fit(obj,size){const b=new THREE.Box3().setFromObject(obj),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),k=size/Math.max(s.x,s.y,s.z);obj.scale.multiplyScalar(k);obj.position.sub(c.multiplyScalar(k));const g=new THREE.Group();g.add(obj);return g;}
   /* ---- animated characters ----
@@ -97,9 +140,9 @@ window.GFX=(function(){
      actor.state('idle'|'walk'|'run'|'sit'|'wave'|'play'), actor.update(dt), actor.has('sit'). */
   const rigs={};
   const KINDS={idle:[/^idle$/i,/^idle[^a-z]/i,/idle/i],walk:[/^walk(ing)?$/i,/^walk[^a-z]/i,/walk/i],run:[/^run(ning)?$/i,/sprint/i,/^run[^a-z]/i,/run/i],
-    sit:[/^sit(ting)?$/i,/sitting/i,/sit[_ -]?idle/i,/^sit/i],wave:[/wave/i,/emote[-_ ]?yes/i,/victory/i,/cheer/i,/yes/i],
+    sit:[/^sit(ting)?$/i,/sitting/i,/sit[_ -]?idle/i,/^sit/i],wave:[/wave/i,/hello/i,/emote[-_ ]?yes/i,/victory/i,/cheer/i,/^yes$/i],yes:[/^yes$/i,/emote[-_ ]?yes/i,/wave/i,/hello/i],
     play:[/interact/i,/^use/i,/pick[-_ ]?up/i],dance:[/dance/i,/victory/i]};
-  const FALL={run:'walk',play:'idle',wave:'idle',dance:'wave',sit:'idle'};
+  const FALL={run:'walk',play:'idle',wave:'idle',dance:'wave',yes:'wave',sit:'idle'};
   function preload(file,ok){
     const base=window.BASEMENT_ASSETS;if(!base||!THREE.GLTFLoader||!THREE.SkeletonUtils){return;}
     let r=rigs[file];if(r){if(r.gltf)ok&&ok();else if(ok)r.q.push(ok);return;}
@@ -129,18 +172,36 @@ window.GFX=(function(){
       if(acts[kind]&&/down|up$|start|end/i.test(c.name)&&kind==='sit'){acts[kind].setLoop(THREE.LoopOnce,1);acts[kind].clampWhenFinished=true;}
       return acts[kind];
     }
-    let cur=null,curKind='';
+    let cur=null,curKind='',one=null;
+    /* rigs with no sitting animation get one by bending the hip and knee bones */
+    const findB=re=>{let b=null;body.traverse(o=>{if(!b&&(o.isBone||o.type==='Object3D')&&re.test(o.name))b=o;});return b;};
+    const legs0=[[findB(/^UpperLeg\.?L|thigh[._]?l|upperleg[._]?l/i),-1.45],[findB(/^UpperLeg\.?R|thigh[._]?r|upperleg[._]?r/i),-1.45],[findB(/^LowerLeg\.?L|shin[._]?l|calf[._]?l|lowerleg[._]?l/i),1.5],[findB(/^LowerLeg\.?R|shin[._]?r|calf[._]?r|lowerleg[._]?r/i),1.5]].filter(q=>q[0]),legs=legs0;
+    const hipBone=findB(/^hips?$|pelvis/i);
+    /* fake sitting only for two-jointed (human) legs with a hip bone; a mech's extra joint would fold wrong */
+    if(!hipBone||findB(/midleg/i))legs.length=0;
+    const realSit=!!pickClip(clips,'sit'),qb=new THREE.Quaternion(),ax=new THREE.Vector3(1,0,0);
+    let hipY=(opts.height||1.5)*0.5;if(hipBone){g.updateMatrixWorld(true);hipY=hipBone.getWorldPosition(new THREE.Vector3()).y;}
+    mixer.addEventListener('finished',e=>{if(e.action===one){one=null;if(cur){cur.reset();cur.play();e.action.crossFadeTo(cur,0.3,false);}}});
     const a={g:g,body:body,mixer:mixer,height:opts.height||1.5,
-      has:kind=>!!act(kind),
+      has:kind=>kind==='sit'?(realSit||legs.length===4):!!act(kind),
+      /* how far to raise or lower the body so it sits on a seat of the given height */
+      sitOffset:seat=>realSit?0.05:seat-hipY+0.06,
       state(kind,fade){
         if(kind===curKind)return;let n=act(kind),k2=kind;
         while(!n&&FALL[k2]){k2=FALL[k2];n=act(k2);}
-        curKind=kind;if(!n||n===cur)return;
+        curKind=kind;if(one){one.stop();one=null;}if(!n||n===cur)return;
         n.reset();n.enabled=true;n.setEffectiveWeight(1);n.play();
         if(cur)cur.crossFadeTo(n,fade===undefined?0.25:fade,false);cur=n;
       },
+      /* plays an animation once (a wave, a dance) and then goes back to what it was doing */
+      once(kind){
+        let n=null,k2=kind;while(!n&&k2){n=pickClip(clips,k2)?act(k2):null;if(!n)k2=FALL[k2]&&FALL[k2]!=='idle'?FALL[k2]:null;}
+        if(!n||n===cur)return false;n.setLoop(THREE.LoopOnce,1);n.clampWhenFinished=false;n.reset();n.enabled=true;n.setEffectiveWeight(1);n.timeScale=1;n.play();
+        if(cur)cur.crossFadeTo(n,0.2,false);one=n;return true;
+      },
       speed(x){if(cur)cur.timeScale=x;},
-      update(dt){mixer.update(dt);},
+      update(dt){mixer.update(dt);
+        if(curKind==='sit'&&!realSit)legs.forEach(q=>{qb.setFromAxisAngle(ax,q[1]);q[0].quaternion.multiply(qb);});},
       bone(re){let b=null;body.traverse(o=>{if(!b&&o.isBone&&re.test(o.name))b=o;});if(!b)body.traverse(o=>{if(!b&&re.test(o.name)&&!o.isMesh)b=o;});return b;},
       dispose(){mixer.stopAllAction();}};
     a.state(opts.start||'idle',0);
@@ -148,5 +209,5 @@ window.GFX=(function(){
   }
   /* the models found in assets/models when the game was built: {characters:[{id,name,file}], npcs:[...]} */
   const roster=window.BASEMENT_MODELS||{characters:[],npcs:[]};
-  return {glowTex:glowTex,glow:glow,particles:particles,vignette:vignette,env:env,sunShadow:sunShadow,model:model,fit:fit,preload:preload,actor:actor,roster:roster};
+  return {glowTex:glowTex,glow:glow,particles:particles,vignette:vignette,env:env,sunShadow:sunShadow,model:model,fit:fit,scatter:scatter,preload:preload,actor:actor,roster:roster};
 })();

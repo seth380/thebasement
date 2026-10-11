@@ -1,0 +1,140 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 8635,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 8635,
+      "max": [
+        4.397274017333984,
+        11.152676582336426,
+        3.8556599617004395
+      ],
+      "min": [
+        -2.332343816757202,
+        -0.3355545997619629,
+        -2.522876024246216
+      ],
+      "bufferView": 0,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 8635,
+      "bufferView": 0,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 8635,
+      "bufferView": 0,
+      "byteOffset": 40
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 19671,
+      "bufferView": 1,
+      "byteOffset": 0
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 414480,
+      "byteStride": 48,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 414480,
+      "byteLength": 39344,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "Bark_DeadTree",
+      "mimeType": "image/png",
+      "uri": "Bark_DeadTree.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "DeadTree_2.bin",
+      "byteLength": 453824
+    }
+  ],
+  "materials": [
+    {
+      "name": "Bark_DeadTree",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "tree.043",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "DeadTree_2",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

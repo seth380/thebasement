@@ -1,0 +1,143 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "VEC4",
+      "componentType": 5123,
+      "count": 360,
+      "normalized": true,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 360,
+      "max": [
+        0.9352107644081116,
+        2.312741994857788,
+        0.917540431022644
+      ],
+      "min": [
+        -0.8713259696960449,
+        -0.0350240021944046,
+        -1.0364887714385986
+      ],
+      "bufferView": 0,
+      "byteOffset": 8
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 360,
+      "bufferView": 0,
+      "byteOffset": 20
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 360,
+      "bufferView": 0,
+      "byteOffset": 32
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 1080,
+      "bufferView": 1,
+      "byteOffset": 0
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 14400,
+      "byteStride": 40,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 14400,
+      "byteLength": 2160,
+      "target": 34963
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "Leaves",
+      "mimeType": "image/png",
+      "uri": "Leaves.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Plant_1_Big.bin",
+      "byteLength": 16560
+    }
+  ],
+  "materials": [
+    {
+      "name": "Leaves",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.20000000298023224,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "Plane.035",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 4
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Plant_1_Big",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

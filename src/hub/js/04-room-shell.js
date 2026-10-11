@@ -27,11 +27,17 @@ function windowAt(g,c){
 function outsideView(g){
   const tl=mk(1024,256,(c,w,h)=>{c.fillStyle='#fff';for(let x=0;x<w;x+=14){const th=90+rnd()*150;c.beginPath();c.moveTo(x-16,h);c.lineTo(x+7,h-th);c.lineTo(x+30,h);c.fill();}},true);
   const m=new THREE.Mesh(new THREE.PlaneGeometry(420,3.2),oMat(0x12301c,{map:tl,transparent:true}));m.position.set(0,3.4,-140);g.add(m);
+  const real=[],stand=[];
   for(let i=0;i<22;i++){
     const x=-95+i*9+rnd()*6,z=-(55+rnd()*55),sc=0.95+rnd()*0.85;
-    const t=new THREE.Mesh(new THREE.CylinderGeometry(0.1*sc,0.16*sc,2*sc,6),trunkM);t.position.set(x,1.9+sc,z);g.add(t);
-    for(let k=0;k<4;k++){const c=new THREE.Mesh(new THREE.ConeGeometry((1.55-0.32*k)*sc,2*sc,7),pineM[(k+i)%4]);c.position.set(x,1.9+(2.2+k*1.15)*sc,z);c.rotation.y=rnd()*3;g.add(c);}
+    real.push({v:i%5,x:x,y:1.9,z:z,ry:rnd()*6.28,h:(7.3+rnd()*1.5)*sc});
+    const t=new THREE.Mesh(new THREE.CylinderGeometry(0.1*sc,0.16*sc,2*sc,6),trunkM);t.position.set(x,1.9+sc,z);g.add(t);stand.push(t);
+    for(let k=0;k<4;k++){const c=new THREE.Mesh(new THREE.ConeGeometry((1.55-0.32*k)*sc,2*sc,7),pineM[(k+i)%4]);c.position.set(x,1.9+(2.2+k*1.15)*sc,z);c.rotation.y=rnd()*3;g.add(c);stand.push(c);}
   }
+  /* with the nature models available, real pines replace the cone trees; unlit and dimmed with the daylight like the rest outside */
+  GFX.scatter([1,2,3,4,5].map(n=>'nature/Pine_'+n+'.gltf'),real,g,{
+    mat:m=>oMat(0xb8c8b0,{map:m.map,alphaTest:0.5,side:THREE.DoubleSide}),
+    done:()=>stand.forEach(s=>s.visible=false)});
 }
 {
   const f=sh(new THREE.Mesh(new THREE.PlaneGeometry(RX*2,RZ*2),S(0xffffff,0.5,0,{map:floorTex})),true);f.rotation.x=-Math.PI/2;scene.add(f);
