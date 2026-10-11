@@ -1,0 +1,10 @@
+{
+  "name": "thebasement",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Basement Arcade: a walk-around 3D basement with arcade cabinets that launch minigames",
+  "scripts": {
+    "build": "node tools/build.js"
+  },
+  "engines": { "node": ">=18" }
+}

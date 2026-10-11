@@ -1,0 +1,162 @@
+<title>Basement Arcade</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;900&display=swap">
+<style>
+/* Layout: full-bleed 3D basement; small sticker HUD in the top corners; action prompt bottom center; side panel for the character editor. */
+:root{
+  --room:#14110f; --ink:#1d1640; --cream:#fff8e7; --sun:#ffc928; --berry:#ff4d6d; --grape:#6c4bd8; --mint:#2fd08a;
+  --display:'Lilita One','Arial Rounded MT Bold','Trebuchet MS',sans-serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight:700;overflow:hidden}
+#h-wrap{position:relative;height:100%;overflow:hidden;-webkit-user-select:none;user-select:none}
+#h-view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.h-sticker{background:var(--cream);color:var(--ink);border:3px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--ink)}
+#h-tag{position:absolute;left:16px;top:16px;padding:6px 14px 8px;transform:rotate(-2deg);background:var(--sun)}
+#h-tag b{display:block;font:400 24px/1.1 var(--display)}
+#h-tag span{font-size:13px}
+#h-btns{position:absolute;right:16px;top:16px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;max-width:55%}
+.h-pill{font:700 13px var(--body);color:var(--ink);background:var(--cream);border:2px solid var(--ink);border-radius:999px;padding:6px 12px;cursor:pointer}
+#h-hint{position:absolute;left:0;right:0;top:84px;text-align:center;font-size:13px;color:var(--cream);text-shadow:0 1px 3px #000;pointer-events:none;padding:0 16px}
+@media (pointer:coarse){#h-hint{display:none}}
+#h-prompt{position:absolute;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);font:400 20px var(--display);padding:10px 18px;cursor:pointer;background:var(--mint);white-space:nowrap;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+#h-toast{position:absolute;left:16px;right:16px;top:30%;text-align:center;font:400 clamp(24px,5vw,36px) var(--display);color:var(--sun);-webkit-text-stroke:4px var(--ink);paint-order:stroke fill;pointer-events:none;text-wrap:balance}
+#h-stick{position:absolute;left:20px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:124px;height:124px;border-radius:50%;border:3px solid var(--cream);background:rgba(255,248,231,.18);display:none;touch-action:none}
+#h-stick i{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px;border-radius:50%;background:var(--cream);border:3px solid var(--ink)}
+@media (pointer:coarse){#h-stick{display:block}#h-prompt{bottom:calc(60px + env(safe-area-inset-bottom,0px));left:auto;right:16px;transform:none;max-width:calc(100% - 180px)}}
+.h-panel{position:absolute;right:16px;top:16px;bottom:16px;width:min(340px,calc(100% - 32px));padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+@media (max-width:640px){.h-panel{top:auto;left:16px;right:16px;width:auto;max-height:58%}}
+.h-panel h2,.h-card h2{margin:0;font:400 30px/1 var(--display);color:var(--grape);text-wrap:balance}
+.h-panel label,.h-lab{font-size:13px;display:block;margin-bottom:5px}
+.h-panel input{width:100%;box-sizing:border-box;font:700 16px var(--body);color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:10px;padding:8px 10px}
+.h-opts{display:flex;gap:8px;flex-wrap:wrap}
+.h-opts button{font:900 13px var(--body);color:var(--ink);background:none;border:3px solid transparent;border-radius:12px;padding:6px 10px;cursor:pointer}
+.h-opts button[aria-pressed="true"]{border-color:var(--ink);background:var(--sun)}
+.h-opts.h-sw button{width:36px;height:36px;padding:0;border-radius:50%;border:3px solid var(--cream);box-shadow:0 0 0 2px var(--ink)}
+.h-opts.h-sw button[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink),0 0 0 6px var(--sun)}
+.h-go{font:400 22px var(--display);color:var(--ink);background:var(--mint);border:3px solid var(--ink);border-radius:14px;padding:9px 16px;box-shadow:4px 4px 0 var(--ink);cursor:pointer}
+.h-over{position:absolute;inset:0;display:flex;padding:16px;overflow:auto;background:rgba(10,8,20,.45)}
+.h-card{margin:auto;width:100%;max-width:460px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.h-game h3{margin:0 0 6px;font:400 19px var(--display)}
+.h-game ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:14px}
+.h-game li{display:flex;gap:8px;align-items:center;opacity:.5}
+.h-game li.got{opacity:1}
+.h-game li i{flex:none;width:16px;height:16px;border-radius:50%;border:2px solid var(--ink)}
+.h-game small{font-size:13px;font-variant-numeric:tabular-nums}
+#h-wrap button:focus-visible,#h-wrap input:focus-visible{outline:3px solid var(--grape);outline-offset:2px}
+#h-chk-status{font-size:15px;min-height:1.4em}
+#h-chk-board,#h-chess-board{display:grid;grid-template-columns:repeat(8,1fr);width:min(100%,54vh);aspect-ratio:1;margin:0 auto;border:3px solid var(--ink);border-radius:8px;overflow:hidden}
+.h-sq{position:relative;border:0;padding:0;margin:0;background:#e3cfa4;border-radius:0}
+.h-sq.d{background:#6b4226}
+.h-sq.last{background:#8d6238}
+.h-sq.can{cursor:pointer}
+.h-sq.sel{background:#b58a2a}
+.h-sq.dest{cursor:pointer}
+.h-sq.dest::after{content:"";position:absolute;inset:34%;border-radius:50%;background:var(--sun);border:2px solid var(--ink)}
+.h-pc{position:absolute;inset:11%;border-radius:50%;border:2px solid var(--ink);box-shadow:inset 0 -4px 0 rgba(0,0,0,.25);pointer-events:none}
+.h-pc.r{background:#d8362b}.h-pc.b{background:#f3ead8}
+.h-pc.k::after{content:"K";position:absolute;inset:0;display:grid;place-items:center;font:900 clamp(11px,2.4vh,18px) var(--body);color:var(--ink)}
+.h-sq.can .h-pc{box-shadow:inset 0 -4px 0 rgba(0,0,0,.25),0 0 0 3px var(--sun)}
+.h-cp{position:absolute;inset:0;display:grid;place-items:center;font-size:min(5vh,8vw);line-height:1;pointer-events:none}
+.h-cp.w{color:#fff8e7;-webkit-text-stroke:1.5px #1d1640}
+.h-cp.b{color:#1d1640;-webkit-text-stroke:1px #fff8e7}
+.h-sq.can .h-cp{text-shadow:0 0 0 var(--sun),0 0 8px var(--sun)}
+.h-card.h-wide{max-width:700px}
+.h-cv{width:100%;display:block;margin:0 auto;border:3px solid var(--ink);border-radius:10px;touch-action:none;background:#1f8a4c}
+.h-stat{font-size:15px;min-height:1.4em}
+.h-bigscore{font:400 30px/1 var(--display);font-variant-numeric:tabular-nums}
+.h-pow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.h-pow input{flex:1;min-width:140px;accent-color:var(--berry)}
+.h-row{display:flex;gap:10px;flex-wrap:wrap}
+.h-go.h-alt{background:var(--cream)}
+.h-gameroot{position:fixed;inset:0;z-index:10}
+.h-leave{position:absolute;left:50%;top:52px;transform:translateX(-50%);z-index:5;font:700 12px var(--body);color:#fff8e7;background:#1d1640;border:2px solid #fff8e7;border-radius:999px;padding:4px 12px;cursor:pointer;opacity:.85}
+</style>
+
+<div id="h-wrap">
+  <canvas id="h-view"></canvas>
+  <div id="h-ui">
+    <div id="h-tag" class="h-sticker"><b>Basement Arcade</b><span id="h-count">Trophies 0/15</span><span id="h-time"></span></div>
+    <div id="h-btns">
+      <button class="h-pill" id="h-b-look" type="button">Change look</button>
+      <button class="h-pill" id="h-b-troph" type="button">Trophies</button>
+    </div>
+    <div id="h-hint">W A S D or arrow keys to walk. Press E to use what you are standing next to.</div>
+    <div id="h-toast"></div>
+    <div id="h-stick"><i id="h-knob"></i></div>
+    <button id="h-prompt" class="h-sticker" type="button" hidden></button>
+  </div>
+
+  <div id="h-custom" class="h-panel h-sticker" hidden>
+    <h2 id="h-c-title">Your character</h2>
+    <div><label for="h-name">Name</label><input id="h-name" maxlength="12" autocomplete="off" placeholder="Player 1"></div>
+    <div><span class="h-lab">Animal</span><div class="h-opts" id="h-species"></div></div>
+    <div><span class="h-lab">Outfit color</span><div class="h-opts h-sw" id="h-colors"></div></div>
+    <div><span class="h-lab">Hat</span><div class="h-opts" id="h-hats"></div></div>
+    <button class="h-go" id="h-c-done" type="button">Done</button>
+  </div>
+
+  <div id="h-troph" class="h-over" hidden>
+    <div class="h-card h-sticker">
+      <h2>Trophy shelf</h2>
+      <div id="h-t-list"></div>
+      <button class="h-go" id="h-t-close" type="button">Close</button>
+    </div>
+  </div>
+
+  <div id="h-chk" class="h-over" hidden>
+    <div class="h-card h-sticker">
+      <h2>Checkers</h2>
+      <div id="h-chk-status" aria-live="polite"></div>
+      <div id="h-chk-board"></div>
+      <div><span class="h-lab">Computer skill</span><div class="h-opts" id="h-chk-diff"></div></div>
+      <div class="h-row"><button class="h-go" id="h-chk-new" type="button">New game</button><button class="h-go h-alt" id="h-chk-leave" type="button">Leave table</button></div>
+      <small id="h-chk-rec"></small>
+    </div>
+  </div>
+
+  <div id="h-chess" class="h-over" hidden>
+    <div class="h-card h-sticker">
+      <h2>Chess</h2>
+      <div class="h-stat" id="h-chess-status" aria-live="polite"></div>
+      <div id="h-chess-board"></div>
+      <div><span class="h-lab">Computer skill</span><div class="h-opts" id="h-chess-diff"></div></div>
+      <div class="h-row"><button class="h-go" id="h-chess-new" type="button">New game</button><button class="h-go h-alt" data-close type="button">Leave table</button></div>
+      <small id="h-chess-rec"></small>
+    </div>
+  </div>
+
+  <div id="h-foos" class="h-over" hidden>
+    <div class="h-card h-wide h-sticker">
+      <h2>Foosball</h2>
+      <div class="h-row" style="justify-content:space-between;align-items:center"><span class="h-bigscore" id="h-foos-score">0 : 0</span><span class="h-stat" id="h-foos-status"></span></div>
+      <canvas class="h-cv" id="h-foos-cv" width="600" height="340" style="aspect-ratio:600/340;width:min(100%,88vh)"></canvas>
+      <small>You are red and shoot to the right. Move the mouse or drag up and down to slide all your rods. Click, tap or press Space for a power kick. First to 5.</small>
+      <div><span class="h-lab">Computer skill</span><div class="h-opts" id="h-foos-diff"></div></div>
+      <div class="h-row"><button class="h-go" id="h-foos-new" type="button">New game</button><button class="h-go h-alt" data-close type="button">Leave table</button></div>
+      <small id="h-foos-rec"></small>
+    </div>
+  </div>
+
+  <div id="h-pool" class="h-over" hidden>
+    <div class="h-card h-wide h-sticker">
+      <h2>Pool</h2>
+      <div class="h-stat" id="h-pool-status" aria-live="polite"></div>
+      <canvas class="h-cv" id="h-pool-cv" width="800" height="400" style="aspect-ratio:2/1;width:min(100%,100vh);background:#5a3a22"></canvas>
+      <div class="h-pow"><label for="h-pool-pow" class="h-lab" style="margin:0">Power</label><input type="range" id="h-pool-pow" min="15" max="100" value="55"><button class="h-go" id="h-pool-shoot" type="button">Shoot</button></div>
+      <small>Eight-ball. Point or drag on the table to aim, set the power, then shoot. Sink all of your balls, then the 8. Sinking the cue ball ends your turn.</small>
+      <div><span class="h-lab">Computer skill</span><div class="h-opts" id="h-pool-diff"></div></div>
+      <div class="h-row"><button class="h-go" id="h-pool-new" type="button">New game</button><button class="h-go h-alt" data-close type="button">Leave table</button></div>
+      <small id="h-pool-rec"></small>
+    </div>
+  </div>
+
+  <div id="h-nogl" class="h-over" hidden><div class="h-card h-sticker"><h2>No 3D here</h2><p>This browser could not start WebGL, which the basement needs. Try a current version of Chrome, Safari, Edge or Firefox.</p></div></div>
+</div>
+
+<!--GAME_TEMPLATES-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>window.GAMES={};</script>
+<!--GAME_SCRIPTS-->
+<!--HUB_SCRIPT-->

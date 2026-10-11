@@ -1,0 +1,101 @@
+<title>Fogbound Isle</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,700;1,500&family=Jost:wght@500;600&display=swap">
+<style>
+/* Layout: full-bleed first-person view; a single centre reticle and prompt; satchel bottom-left; parchment panels for notes and brass panels for mechanisms. */
+:root{
+  --ink:#18201f; --fog:#aebfba; --parch:#efe3c8; --parch2:#e2d2ae; --brass:#c9a15a; --brassd:#7a5a2a; --teal:#2f6f6a; --ember:#e0733a;
+  --display:'Cormorant Garamond','Palatino Linotype',Georgia,serif;
+  --body:'Jost','Segoe UI',system-ui,sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--ink);color:var(--parch);font-family:var(--body);font-weight:500;overflow:hidden;-webkit-user-select:none;user-select:none}
+#game{position:relative;height:100%;overflow:hidden;background:var(--fog)}
+#view{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#hud{position:absolute;inset:0;pointer-events:none}
+#ret{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:var(--parch);opacity:.55;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
+#ret.hot{width:16px;height:16px;margin:-8px;background:transparent;border:2px solid var(--brass);opacity:1}
+#prompt{position:absolute;left:0;right:0;top:calc(50% + 26px);text-align:center;font:italic 500 21px var(--display);color:var(--parch);text-shadow:0 1px 4px #000,0 0 12px rgba(0,0,0,.6)}
+#say{position:absolute;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));text-align:center;font:italic 500 clamp(18px,2.6vw,24px) var(--display);color:var(--parch);text-shadow:0 1px 4px #000,0 0 14px rgba(0,0,0,.7);text-wrap:balance;opacity:0;transition:opacity .6s}
+#say.on{opacity:1}
+#bag{position:absolute;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;align-items:center;pointer-events:auto}
+#bag button,.chip{font:600 13px var(--body);letter-spacing:.06em;color:var(--parch);background:rgba(20,30,29,.7);border:1px solid rgba(201,161,90,.6);border-radius:4px;padding:7px 12px;cursor:pointer}
+.chip{cursor:default;color:var(--brass)}
+#lockhint{position:absolute;left:50%;top:16px;transform:translateX(-50%);font-size:13px;padding:5px 12px;background:rgba(20,30,29,.7);border-radius:4px}
+#touch{position:absolute;inset:0;display:none}
+@media (pointer:coarse){#touch{display:block}#lockhint{display:none}}
+#stick{position:absolute;left:18px;bottom:calc(74px + env(safe-area-inset-bottom,0px));width:112px;height:112px;border-radius:50%;border:1px solid rgba(239,227,200,.5);background:rgba(239,227,200,.1);pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px;border-radius:50%;background:var(--parch);opacity:.8}
+#tuse{position:absolute;right:18px;bottom:calc(84px + env(safe-area-inset-bottom,0px));width:84px;height:84px;border-radius:50%;border:2px solid var(--brass);background:rgba(20,30,29,.6);color:var(--parch);font:600 15px var(--body);pointer-events:auto;touch-action:none}
+#fade{position:absolute;inset:0;background:#0d1413;opacity:0;pointer-events:none;transition:opacity 1.6s}
+.overlay{position:absolute;inset:0;display:flex;padding:16px;overflow:auto;background:rgba(10,16,15,.55)}
+.card{width:100%;max-width:520px;margin:auto;padding:26px 26px 24px;display:flex;flex-direction:column;gap:14px;text-align:center}
+.parch{background:linear-gradient(170deg,var(--parch),var(--parch2));color:var(--ink);border-radius:3px;box-shadow:0 10px 40px rgba(0,0,0,.55),inset 0 0 50px rgba(120,90,40,.25)}
+.brass{background:linear-gradient(160deg,#3a3326,#22201b);color:var(--parch);border:2px solid var(--brassd);border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(201,161,90,.35)}
+.card h1{margin:0;font:700 clamp(40px,9vw,62px)/0.95 var(--display);letter-spacing:.01em;text-wrap:balance}
+.card h2{margin:0;font:700 30px/1.05 var(--display);text-wrap:balance}
+.card p{margin:0;font:500 19px/1.4 var(--display);text-wrap:pretty}
+.card p.sm{font:500 14px/1.45 var(--body)}
+.card em{font-style:italic}
+.tag{font:600 12px var(--body);letter-spacing:.22em;text-transform:uppercase;color:var(--teal)}
+.brass .tag{color:var(--brass)}
+.go{font:700 22px var(--display);color:var(--parch);background:var(--teal);border:0;border-radius:3px;padding:10px 20px;cursor:pointer;letter-spacing:.03em}
+.go.alt{background:transparent;color:inherit;border:1px solid currentColor;font-size:17px;opacity:.85}
+.row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
+button:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;text-align:left;font:500 14px var(--body);margin:0 auto}
+.keys dt{color:var(--teal);font-weight:600;white-space:nowrap}.keys dd{margin:0}
+.sym{width:74px;height:74px;border-radius:50%;border:2px solid var(--brassd);background:#15130f center/70% no-repeat;cursor:pointer;padding:0}
+.sym.sm{width:58px;height:58px}
+.sym[aria-pressed="true"]{border-color:var(--ember);box-shadow:0 0 14px rgba(224,115,58,.7)}
+.dial{display:flex;flex-direction:column;gap:6px;align-items:center}
+.dial button.arr{width:44px;height:30px;font:600 16px var(--body);color:var(--parch);background:#2b2a23;border:1px solid var(--brassd);border-radius:4px;cursor:pointer}
+.gauge{font:700 34px var(--display);min-width:74px;padding:6px 0;border:2px solid var(--brassd);border-radius:6px;background:#15130f;font-variant-numeric:tabular-nums}
+.note-img{width:100%;border-radius:2px;border:1px solid rgba(60,40,10,.4)}
+.pages{display:flex;flex-direction:column;gap:8px;text-align:left}
+.pages button{font:500 18px var(--display);text-align:left;color:var(--ink);background:rgba(255,255,255,.35);border:1px solid rgba(60,40,10,.35);border-radius:3px;padding:8px 12px;cursor:pointer}
+.hint-touch{display:none}
+@media (pointer:coarse){.hint-touch{display:block}.hint-keys{display:none}}
+</style>
+
+<div id="game">
+  <canvas id="view"></canvas>
+  <div id="hud" hidden>
+    <div id="ret"></div><div id="prompt"></div><div id="say"></div>
+    <div id="lockhint" hidden>Click to look around</div>
+    <div id="bag"><button id="bjournal" type="button">Journal</button><span id="items"></span></div>
+    <div id="touch"><div id="stick"><div id="knob"></div></div><button id="tuse" type="button">Use</button></div>
+  </div>
+  <div id="fade"></div>
+
+  <div id="menu" class="overlay">
+    <div class="card parch">
+      <div class="tag">A quiet mystery</div>
+      <h1>Fogbound Isle</h1>
+      <p>Your boat ran aground in the fog. The island is empty, but someone built a great deal here, and left it all switched off. Find out what it was for, and light the way out.</p>
+      <button class="go" id="start" type="button">Step ashore</button>
+      <dl class="keys hint-keys">
+        <dt>W A S D · Shift</dt><dd>Walk · hurry</dd>
+        <dt>Mouse</dt><dd>Look. Click the game first to capture the mouse.</dd>
+        <dt>E or click</dt><dd>Use what the ring is on</dd>
+        <dt>J · Esc</dt><dd>Journal · release the mouse</dd>
+      </dl>
+      <p class="sm hint-touch">Left stick walks. Drag anywhere to look. Put the centre ring on something and press Use.</p>
+      <p class="sm" id="saveline"></p>
+      <button class="go alt" id="wipe" type="button" hidden>Start over from the beach</button>
+    </div>
+  </div>
+
+  <div id="panel" class="overlay" hidden><div class="card" id="pcard"></div></div>
+
+  <div id="results" class="overlay" hidden>
+    <div class="card parch">
+      <div class="tag">The beacon is lit</div>
+      <h2>The fog lifts</h2>
+      <p id="endtext"></p>
+      <div class="row"><button class="go" id="again" type="button">Keep exploring</button><button class="go alt" id="change" type="button">Back to the title</button></div>
+    </div>
+  </div>
+
+  <div id="nogl" class="overlay" hidden><div class="card parch"><h2>No 3D here</h2><p>This browser could not start WebGL, which the island needs.</p></div></div>
+</div>
