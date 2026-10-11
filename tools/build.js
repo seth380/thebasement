@@ -34,10 +34,13 @@ for(const [id,file,cast] of games){
 const hubJs=fs.readdirSync(path.join(src,'hub/js')).filter(f=>f.endsWith('.js')).sort().map(f=>read('hub/js/'+f).replace(/\n$/,'')).join('\n');
 let hub=read('hub/index.html');
 hub=must(hub,'<!--GAME_TEMPLATES-->',tpl);
-hub=must(hub,'<!--GAME_SCRIPTS-->','<script>\n'+read('shared/critter.js')+'\n</script>\n'+scr);
+hub=must(hub,'<!--GAME_SCRIPTS-->','<script>\n'+read('shared/critter.js')+'\n'+read('shared/sfx.js')+'\n</script>\n'+scr);
 hub=must(hub,'<!--HUB_SCRIPT-->',"<script>\n(function(){\n'use strict';\n"+hubJs+'\n})();\n</script>');
 fs.mkdirSync(dist,{recursive:true});
 fs.writeFileSync(path.join(dist,'basement-arcade.html'),hub);
-const page='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<style>html,body{margin:0;height:100%;background:#120e24}[hidden]{display:none!important}</style>\n<script>window.BASEMENT_SERVER="auto";</script>\n</head>\n<body>\n'+hub+'\n</body>\n</html>\n';
+/* the served page uses the copies in assets/ so it does not depend on a CDN */
+const local=must(hub,THREE_TAG,'<script src="assets/vendor/three.min.js"></script>');
+fs.cpSync(path.join(root,'assets'),path.join(dist,'assets'),{recursive:true});
+const page='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<style>html,body{margin:0;height:100%;background:#120e24}[hidden]{display:none!important}</style>\n<script>window.BASEMENT_SERVER="auto";window.BASEMENT_ASSETS="assets/";</script>\n</head>\n<body>\n'+local+'\n</body>\n</html>\n';
 fs.writeFileSync(path.join(dist,'index.html'),page);
 console.log('built dist/index.html',page.length,'bytes');

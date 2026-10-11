@@ -18,9 +18,9 @@ function closeCustom(){store.setItem('hub-avatar',JSON.stringify(av));$('h-custo
 $('h-name').addEventListener('input',e=>{av.name=e.target.value.trim().slice(0,12);buildAvatar();});
 $('h-c-done').addEventListener('click',closeCustom);
 $('h-b-look').addEventListener('click',()=>openCustom());
-function openTrophies(){refreshTrophies();$('h-troph').hidden=false;}
+function openTrophies(){SFX.play('open');refreshTrophies();$('h-troph').hidden=false;}
 $('h-b-troph').addEventListener('click',openTrophies);
 $('h-t-close').addEventListener('click',()=>closeOvers());
-function sit(){mode='sit';P.x=-6.62;P.z=2;P.h=-Math.PI/2;}
+function sit(){SFX.play('drop2');mode='sit';P.x=-6.62;P.z=2;P.h=-Math.PI/2;}
 function stand(){mode='walk';P.x=-7.35;P.z=2;}
 

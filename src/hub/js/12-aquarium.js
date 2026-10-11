@@ -24,6 +24,6 @@ const fish=[],bubbles=[],weeds=[];let feedT=0;
     scene.add(g);fish.push({g:g,tail:tp,cx:ax+(rnd()-0.5)*0.3,cy:y0+0.16+rnd()*0.34,cz:az+(rnd()-0.5)*0.12,amp:0.42+rnd()*0.22,sp:0.35+rnd()*0.5,ph:rnd()*6,up:0,top:y0+h-0.1,face:0});});
   for(let i=0;i<9;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.008+rnd()*0.006,6,6),new THREE.MeshBasicMaterial({color:0xdff7ff,transparent:true,opacity:0.7}));scene.add(m);bubbles.push({m:m,x:ax+0.62+(rnd()-0.5)*0.05,z:az+(rnd()-0.5)*0.05,y0:y0+0.08,h:h-0.14,p:rnd()});}
   solid(ax-0.87,ax+0.87,-RZ,az+0.3);
-  things.push({x:ax,z:-6.75,r:1.2,text:'Feed the fish',fn:()=>{feedT=6;toast('The fish swim up to eat');}});
+  things.push({x:ax,z:-6.75,r:1.2,text:'Feed the fish',fn:()=>{SFX.play('glass');for(let i=0;i<6;i++)SFX.blip(500+i*90,1100+i*90,0.07,'sine',0.04,{delay:0.15+i*0.11});feedT=6;toast('The fish swim up to eat');}});
 }
 

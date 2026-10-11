@@ -277,6 +277,7 @@ function beep(freq,dur,type,vol,to,delay){
   g.gain.setValueAtTime(vol||0.07,t);g.gain.exponentialRampToValueAtTime(0.001,t+dur);o.connect(g);g.connect(master);o.start(t);o.stop(t+dur);}catch(e){}
 }
 function shotSound(){
+  SFX.burst(2600,900,0.12,0.11,{game:true});
   beep(950,0.13,'sawtooth',0.06,180);
   if(!ac)return;
   try{const s=ac.createBufferSource(),g=ac.createGain(),t=ac.currentTime;s.buffer=noiseBuf;g.gain.setValueAtTime(0.08,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.09);s.connect(g);g.connect(master);s.start(t);}catch(e){}
@@ -321,7 +322,7 @@ function shoot(){
     if(isDisc)v3.set(bestT.x,bestT.y,bestT.z);else v3.set(bestT.x,bestT.cy,bestT.z);
     pa.setXYZ(0,v3b.x,v3b.y,v3b.z);pa.setXYZ(1,v3.x,v3.y,v3.z);
     if(!isDisc&&bestT.kind==='bad'){
-      score=Math.max(0,score-150);streak=0;setMult();popup(v3,'−150','bad');beep(130,0.3,'sawtooth',0.08,70);
+      score=Math.max(0,score-150);streak=0;setMult();popup(v3,'−150','bad');SFX.play('error',{game:true,vol:0.7});beep(130,0.3,'sawtooth',0.08,70);
       burst(v3.x,v3.y,v3.z,[0x1d1640,0x6c4bd8],8,1);bestT.st='falling';
     }else{
       hits++;streak++;if(streak>bestStreak)bestStreak=streak;
@@ -330,7 +331,7 @@ function shoot(){
       else if(bestT.kind==='gold'){pts=300;cls='gold';label='Gold ';burst(v3.x,v3.y,v3.z,[0xffc928,0xfff8e7],14,1.2);beep(880,0.1,'triangle',0.1);beep(1320,0.1,'triangle',0.1,0,0.08);beep(1760,0.2,'triangle',0.1,0,0.16);bestT.st='falling';}
       else{
         const rr=bestR*tol;
-        if(rr<0.3){pts=100;bulls++;label='Bullseye ';cls='gold';beep(880,0.08,'triangle',0.1);beep(1320,0.16,'triangle',0.1,0,0.07);}
+        if(rr<0.3){pts=100;bulls++;label='Bullseye ';cls='gold';SFX.play('coin',{game:true});beep(880,0.08,'triangle',0.1);beep(1320,0.16,'triangle',0.1,0,0.07);}
         else{pts=rr<0.6?50:25;beep(rr<0.6?660:520,0.1,'triangle',0.08);}
         pts*=bestT.rowMult;burst(v3.x,v3.y,v3.z,[0xff4d6d,0xfff8e7,0xffc928],8,bestT.s+0.4);bestT.st='falling';
       }
@@ -451,7 +452,7 @@ $('start').addEventListener('click',startRound);
 $('again').addEventListener('click',startRound);
 $('change').addEventListener('click',showMenu);
 $('reload').addEventListener('click',startReload);
-$('snd').addEventListener('click',()=>{soundOn=!soundOn;$('snd').textContent=soundOn?'Sound on':'Sound off';if(master)master.gain.value=soundOn?1:0;});
+$('snd').addEventListener('click',()=>{soundOn=!soundOn;$('snd').textContent=soundOn?'Sound on':'Sound off';if(master)master.gain.value=soundOn?1:0;SFX.gameMute(!soundOn);});
 const view=$('view');
 function aim(e){
   const r=view.getBoundingClientRect();

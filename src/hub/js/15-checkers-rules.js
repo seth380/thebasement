@@ -59,8 +59,9 @@ function ckRender(){
   ckSync(v);
 }
 function ckNew(){ck.b=ckInit();ck.turn=1;ck.legal=ckMoves(ck.b,1);ck.sel=-1;ck.prefix=[];ck.last=[];ck.over='';ck.noCap=0;ckRender();}
-function ckEnd(r){ck.over=r==='w'?'You win!':r==='l'?'The computer wins this one.':'Draw.';ck.turn=0;const st=readJ('chk-stats');st[r]=(st[r]||0)+1;store.setItem('chk-stats',JSON.stringify(st));}
+function ckEnd(r){SFX.play(r==='w'?'win':r==='l'?'error':'bong',{delay:0.25});ck.over=r==='w'?'You win!':r==='l'?'The computer wins this one.':'Draw.';ck.turn=0;const st=readJ('chk-stats');st[r]=(st[r]||0)+1;store.setItem('chk-stats',JSON.stringify(st));}
 function ckCommit(m,s){
+  SFX.play(m.caps.length?'remove':'place');
   ck.b=ckApply(ck.b,m);ck.last=[m.from].concat(m.path);ck.noCap=m.caps.length?0:ck.noCap+1;ck.sel=-1;ck.prefix=[];
   const nm=ckMoves(ck.b,-s);
   if(!nm.length)ckEnd(s===1?'w':'l');else if(ck.noCap>=80)ckEnd('d');
@@ -78,13 +79,13 @@ $('h-chk-board').addEventListener('click',e=>{
 });
 CKD.forEach((d,i)=>{const b=document.createElement('button');b.type='button';b.id='h-chk-d'+i;b.textContent=d[0];b.setAttribute('aria-pressed',i===ck.diff);
   b.addEventListener('click',()=>{ck.diff=i;store.setItem('chk-diff',String(i));[].forEach.call($('h-chk-diff').children,(c,n)=>c.setAttribute('aria-pressed',n===i));});$('h-chk-diff').appendChild(b);});
-function openChk(){if(!ck.b)ckNew();$('h-chk').hidden=false;ckRender();}
+function openChk(){SFX.play('open');if(!ck.b)ckNew();$('h-chk').hidden=false;ckRender();}
 $('h-chk-new').addEventListener('click',ckNew);
 $('h-chk-leave').addEventListener('click',()=>closeOvers());
 ckSync(ckInit());
 const OVERS=['h-troph','h-chk','h-chess','h-foos','h-pool'];
 const modal=()=>OVERS.some(id=>!$(id).hidden);
-function closeOvers(){OVERS.forEach(id=>{$(id).hidden=true;});FB.on=false;PL.on=false;}
+function closeOvers(){if(modal())SFX.play('close');OVERS.forEach(id=>{$(id).hidden=true;});FB.on=false;PL.on=false;}
 
 /* things that move on their own */
 function animate(dt,t){

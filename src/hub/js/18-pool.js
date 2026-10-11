@@ -16,7 +16,7 @@ function plHud(){
   $('h-pool-shoot').disabled=!(PL.state==='aim'&&PL.turn===0&&!PL.over);
   const st=readJ('pool-stats');$('h-pool-rec').textContent='Wins '+(st.w||0)+'  ·  Losses '+(st.l||0);
 }
-function plShoot(pow){const c=PL.balls[0];c.vx=Math.cos(PL.aim)*pow;c.vy=Math.sin(PL.aim)*pow;PL.state='roll';PL.potted=[];PL.scratch=false;plHud();}
+function plShoot(pow){SFX.play('tile_land',{vol:0.5+pow/250,rate:0.8});const c=PL.balls[0];c.vx=Math.cos(PL.aim)*pow;c.vy=Math.sin(PL.aim)*pow;PL.state='roll';PL.potted=[];PL.scratch=false;plHud();}
 function plResolve(){
   const who=PL.turn,c=PL.balls[0];let keep=false;
   if(PL.scratch){c.in=false;c.vx=c.vy=0;c.x=200;c.y=200;let tries=0;while(PL.balls.some(b=>b!==c&&!b.in&&Math.hypot(b.x-c.x,b.y-c.y)<PR*2.1)&&tries++<40)c.y=60+Math.random()*280;}
@@ -44,18 +44,18 @@ function plAI(){
   const u=Math.random()+Math.random()+Math.random()-1.5;PL.aim=best.a+u*PLD[PL.diff][1]*1.6;PL.aiPow=best.pow;
 }
 function plTick(dt){
-  const B=PL.balls,g=PL.ctx;
+  const B=PL.balls,g=PL.ctx;if(AUD.poolT>0)AUD.poolT-=dt;
   if(PL.state==='roll'){
     const n=6,h=dt/n;let moving=false;
     for(let k=0;k<n;k++){
       for(const b of B){if(b.in)continue;b.x+=b.vx*h;b.y+=b.vy*h;
         let pot=false;for(const p of POCK)if(Math.hypot(b.x-p[0],b.y-p[1])<p[2]){pot=true;break;}
-        if(pot){b.in=true;b.vx=b.vy=0;if(b.n===0)PL.scratch=true;else PL.potted.push(b.n);continue;}
+        if(pot){SFX.play('drop2',{vol:0.9});b.in=true;b.vx=b.vy=0;if(b.n===0)PL.scratch=true;else PL.potted.push(b.n);continue;}
         if(b.x<30+PR){b.x=30+PR;b.vx=Math.abs(b.vx)*0.86;}if(b.x>770-PR){b.x=770-PR;b.vx=-Math.abs(b.vx)*0.86;}
         if(b.y<30+PR){b.y=30+PR;b.vy=Math.abs(b.vy)*0.86;}if(b.y>370-PR){b.y=370-PR;b.vy=-Math.abs(b.vy)*0.86;}}
       for(let i=0;i<B.length;i++){const a=B[i];if(a.in)continue;for(let j=i+1;j<B.length;j++){const b=B[j];if(b.in)continue;const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);
         if(d<PR*2&&d>0.001){const nx=dx/d,ny=dy/d,ov=(PR*2-d)/2;a.x-=nx*ov;a.y-=ny*ov;b.x+=nx*ov;b.y+=ny*ov;const rv=(b.vx-a.vx)*nx+(b.vy-a.vy)*ny;
-          if(rv<0){const im=rv*0.98;a.vx+=nx*im;a.vy+=ny*im;b.vx-=nx*im;b.vy-=ny*im;}}}}
+          if(rv<0){if(rv<-25&&!(AUD.poolT>0)){AUD.poolT=0.03;SFX.play('tick',{vol:Math.min(1.4,-rv/260),rate:0.85,jitter:0.15});}const im=rv*0.98;a.vx+=nx*im;a.vy+=ny*im;b.vx-=nx*im;b.vy-=ny*im;}}}}
     }
     for(const b of B){if(b.in)continue;const sp=Math.hypot(b.vx,b.vy);if(sp<5){b.vx=b.vy=0;continue;}const ns=Math.max(0,sp-(46+sp*0.32)*dt);b.vx*=ns/sp;b.vy*=ns/sp;moving=true;}
     if(!moving)plResolve();
@@ -90,7 +90,7 @@ function plTick(dt){
 function plPlayerShoot(){if(PL.state==='aim'&&PL.turn===0&&!PL.over)plShoot(+$('h-pool-pow').value*11);}
 $('h-pool-shoot').addEventListener('click',plPlayerShoot);
 diffRow('h-pool-diff',PLD,PL,'pool-diff');
-function openPool(){$('h-pool').hidden=false;PL.on=true;if(!PL.balls.length||PL.over)plNew();plHud();}
+function openPool(){SFX.play('open');$('h-pool').hidden=false;PL.on=true;if(!PL.balls.length||PL.over)plNew();plHud();}
 $('h-pool-new').addEventListener('click',plNew);
 [].forEach.call(document.querySelectorAll('#h-wrap [data-close]'),b=>b.addEventListener('click',()=>closeOvers()));
 /* pool table in the room */
