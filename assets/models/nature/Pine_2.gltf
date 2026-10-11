@@ -1,0 +1,226 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 3616,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 3616,
+      "max": [
+        1.3288283348083496,
+        6.861804008483887,
+        1.4154813289642334
+      ],
+      "min": [
+        -0.8798791170120239,
+        -0.23508860170841217,
+        -1.9060800075531006
+      ],
+      "bufferView": 0,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 3616,
+      "bufferView": 0,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 3616,
+      "bufferView": 0,
+      "byteOffset": 40
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 8634,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 2310,
+      "bufferView": 1,
+      "byteOffset": 17268
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 1310,
+      "bufferView": 2,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1310,
+      "max": [
+        2.8361265659332275,
+        7.141149520874023,
+        2.527508020401001
+      ],
+      "min": [
+        -2.891958236694336,
+        1.1175905466079712,
+        -2.6936988830566406
+      ],
+      "bufferView": 2,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 1310,
+      "bufferView": 2,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 1310,
+      "bufferView": 2,
+      "byteOffset": 40
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 173568,
+      "byteStride": 48,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 173568,
+      "byteLength": 21888,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 195456,
+      "byteLength": 62880,
+      "byteStride": 48,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    },
+    {
+      "source": 1,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "Bark_NormalTree",
+      "mimeType": "image/png",
+      "uri": "Bark_NormalTree.png"
+    },
+    {
+      "name": "Leaf_Pine_C",
+      "mimeType": "image/png",
+      "uri": "Leaf_Pine_C.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "Pine_2.bin",
+      "byteLength": 258336
+    }
+  ],
+  "materials": [
+    {
+      "name": "Bark_NormalTree",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.20000000298023224,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    },
+    {
+      "name": "Leaves_Pine",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.20000000298023224,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 1
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "tree.029",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 4
+        },
+        {
+          "attributes": {
+            "COLOR_0": 6,
+            "POSITION": 7,
+            "NORMAL": 8,
+            "TEXCOORD_0": 9
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 5
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "Pine_2",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

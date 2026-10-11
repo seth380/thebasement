@@ -1,0 +1,224 @@
+{
+  "asset": {
+    "generator": "glTF-Transform v4.5.1",
+    "version": "2.0"
+  },
+  "accessors": [
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 9360,
+      "bufferView": 0,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 9360,
+      "max": [
+        9.911966323852539,
+        15.281858444213867,
+        3.4427638053894043
+      ],
+      "min": [
+        -1.498000979423523,
+        -0.20147469639778137,
+        -5.117466926574707
+      ],
+      "bufferView": 0,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 9360,
+      "bufferView": 0,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 9360,
+      "bufferView": 0,
+      "byteOffset": 40
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 21636,
+      "bufferView": 1,
+      "byteOffset": 0
+    },
+    {
+      "type": "SCALAR",
+      "componentType": 5123,
+      "count": 7056,
+      "bufferView": 1,
+      "byteOffset": 43272
+    },
+    {
+      "type": "VEC4",
+      "componentType": 5126,
+      "count": 4704,
+      "bufferView": 2,
+      "byteOffset": 0
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 4704,
+      "max": [
+        11.341513633728027,
+        16.52402114868164,
+        4.822585105895996
+      ],
+      "min": [
+        -2.174241065979004,
+        2.4449024200439453,
+        -6.726779460906982
+      ],
+      "bufferView": 2,
+      "byteOffset": 16
+    },
+    {
+      "type": "VEC3",
+      "componentType": 5126,
+      "count": 4704,
+      "bufferView": 2,
+      "byteOffset": 28
+    },
+    {
+      "type": "VEC2",
+      "componentType": 5126,
+      "count": 4704,
+      "bufferView": 2,
+      "byteOffset": 40
+    }
+  ],
+  "bufferViews": [
+    {
+      "buffer": 0,
+      "byteOffset": 0,
+      "byteLength": 449280,
+      "byteStride": 48,
+      "target": 34962
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 449280,
+      "byteLength": 57384,
+      "target": 34963
+    },
+    {
+      "buffer": 0,
+      "byteOffset": 506664,
+      "byteLength": 225792,
+      "byteStride": 48,
+      "target": 34962
+    }
+  ],
+  "samplers": [
+    {
+      "magFilter": 9729,
+      "minFilter": 9987,
+      "wrapS": 10497,
+      "wrapT": 10497
+    }
+  ],
+  "textures": [
+    {
+      "source": 0,
+      "sampler": 0
+    },
+    {
+      "source": 1,
+      "sampler": 0
+    }
+  ],
+  "images": [
+    {
+      "name": "Bark_TwistedTree",
+      "mimeType": "image/png",
+      "uri": "Bark_TwistedTree.png"
+    },
+    {
+      "name": "Leaves_TwistedTree_C",
+      "mimeType": "image/png",
+      "uri": "Leaves_TwistedTree_C.png"
+    }
+  ],
+  "buffers": [
+    {
+      "uri": "TwistedTree_1.bin",
+      "byteLength": 732456
+    }
+  ],
+  "materials": [
+    {
+      "name": "Bark_TwistedTree",
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 0
+        }
+      }
+    },
+    {
+      "name": "Leaves_TwistedTree",
+      "alphaMode": "MASK",
+      "alphaCutoff": 0.20000000298023224,
+      "doubleSided": true,
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "baseColorTexture": {
+          "index": 1
+        }
+      }
+    }
+  ],
+  "meshes": [
+    {
+      "name": "tree.038",
+      "primitives": [
+        {
+          "attributes": {
+            "COLOR_0": 0,
+            "POSITION": 1,
+            "NORMAL": 2,
+            "TEXCOORD_0": 3
+          },
+          "mode": 4,
+          "material": 0,
+          "indices": 4
+        },
+        {
+          "attributes": {
+            "COLOR_0": 6,
+            "POSITION": 7,
+            "NORMAL": 8,
+            "TEXCOORD_0": 9
+          },
+          "mode": 4,
+          "material": 1,
+          "indices": 5
+        }
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "name": "TwistedTree_1",
+      "mesh": 0
+    }
+  ],
+  "scenes": [
+    {
+      "name": "Scene",
+      "nodes": [
+        0
+      ]
+    }
+  ],
+  "scene": 0
+}

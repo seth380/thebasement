@@ -40,6 +40,15 @@ function floorY(x){return x>-11?0:-3*Math.min(1,(-11-x)/6);}
   const shroom=(x,y,z,s2)=>{const g=new THREE.Group();g.position.set(x,y,z);const st=new THREE.Mesh(new THREE.CylinderGeometry(0.012*s2,0.018*s2,0.12*s2,5),stM);st.position.y=0.06*s2;g.add(st);const c=new THREE.Mesh(new THREE.SphereGeometry(0.06*s2,8,5,0,6.3,0,1.6),capM);c.position.y=0.11*s2;g.add(c);scene.add(g);};
   for(let i=0;i<60;i++){const a=rnd()*6.283,r=3+rnd()*3.4,x=CAVE.x+Math.cos(a)*r,z=CAVE.z+Math.sin(a)*r;if(x>CAVE.x+4.2&&Math.abs(z-CAVE.z)<1)continue;shroom(x,CAVE.y,z,0.8+rnd()*1.6);}
   for(let i=0;i<12;i++)shroom(-11.4-i*0.5,-(i+1)*0.25,i%2?SZ0+0.12:SZ1-0.12,1.2);
+  /* real plants from the nature kit, when it is available: ferns and plants round the walls and the pond, mushrooms, mossy rocks */
+  {const F=['Fern_1','Plant_1','Plant_7','Plant_1_Big','Mushroom_Common','Mushroom_Laetiporus','Rock_Medium_1','Rock_Medium_2','Grass_Common_Tall','Grass_Wispy_Tall'].map(n=>'nature/'+n+'.gltf');
+   const H=[0.9,0.7,0.8,1.3,0.35,0.3,0.8,0.6,0.9,0.6],its=[];
+   const free=(x,z)=>!(x>CAVE.x+3.9&&Math.abs(z-CAVE.z)<1.6)&&Math.hypot(x-sec.cx,z-sec.cz)>1.2;
+   for(let i=0;i<70;i++){
+     const near=i<26,a=rnd()*6.283,r=near?2.6+rnd()*0.7:4.4+rnd()*1.9,x=(near?CAVE.x-2.9:CAVE.x)+Math.cos(a)*r,z=CAVE.z+Math.sin(a)*r;
+     if(!free(x,z)||Math.hypot(x-CAVE.x,z-CAVE.z)>6.4)continue;
+     const v=near?[0,1,2,9,4][i%5]:[0,0,3,8,4,5,6,7,2,9][i%10];its.push({v:v,x:x,y:CAVE.y,z:z,ry:rnd()*6.28,h:H[v]*(0.75+rnd()*0.6)});}
+   GFX.scatter(F,its,scene,{});}
   const cl=new THREE.PointLight(0x7dffe8,1.25,15,1.4);cl.position.set(CAVE.x-1,CAVE.y+2.6,CAVE.z);scene.add(cl);
   /* treasure chest */
   const gold=S(0xffc928,0.25,1),cw=S(0x6b4226,0.7,0,{map:woodTex}),cx=sec.cx,cz=sec.cz,cy=CAVE.y;

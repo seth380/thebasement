@@ -61,7 +61,11 @@ function animateBody(b,dt,move,pose,t,phase){
   else{b.arms[0].rotation.x=sit?-0.5:-sw*0.8;b.arms[1].rotation.x=sit?-0.5:sw*0.8;}
 }
 /* how high a body sits off the floor: critters perch on the cushion, models with a sit animation need less */
-const sitLift=b=>b.actor?(b.actor.has('sit')?0.05:0.2):0.2;
+const SEAT=0.5;
+const sitLift=b=>b.actor?(b.actor.has('sit')?b.actor.sitOffset(SEAT):0.2):0.2;
+/* emotes 👋 😂 🎉 👍 make a model wave, laugh (no clip yet, so nothing), dance or nod */
+const EMOTE_ANIM=['wave','','dance','yes'];
+function bodyEmote(b,k){if(b&&b.actor&&EMOTE_ANIM[k])b.actor.once(EMOTE_ANIM[k]);}
 function buildAvatar(){
   const keep=avatar?{x:avatar.g.position.x,z:avatar.g.position.z}:null;
   if(avatar){scene.remove(avatar.g);if(avatar.actor)avatar.actor.dispose();}

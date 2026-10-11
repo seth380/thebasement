@@ -9,8 +9,10 @@ function npcMake(name,kind,head,color,lines,route){
 /* NPCs wear the models in assets/models/npcs, one each, in order; they stay critters until those load */
 function npcReskin(n,m){
   GFX.preload(m.file,()=>{
-    const nb=makeAvatarModel(Object.assign({},n.look,{model:m.id}),{tagColor:'#ffe9a8'});if(!nb.actor)return;
+    const nb=makeAvatarModel(Object.assign({},n.look,{model:m.id}),{tagColor:'#ffe9a8',height:1.55});if(!nb.actor)return;
     scene.remove(n.b.g);n.b=nb;scene.add(nb.g);
+    /* a model that cannot sit gets up off the couch: it watches TV from behind it and strolls around instead */
+    if(n.pose==='sit'&&!nb.actor.has('sit')){const W=-Math.PI/2;n.route=[[-3.6,1.4],[-3.6,2.6,W,10,'look'],[-2.2,4.6],[0.4,4.4,0,5,'look'],[-2.2,4.6]];n.i=0;n.x=-3.6;n.z=1.4;n.pose='walk';}
   });
 }
 {
@@ -30,7 +32,7 @@ function npcTick(dt,t){
     const b=n.b;
     if(n.pose==='sit'){
       /* a model with no sitting animation stands behind the couch and watches TV instead */
-      if(b.actor&&!b.actor.has('sit')){b.g.position.set(-5.65,0,3.45);b.g.rotation.y=n.h;animateBody(b,dt,0,'look',t,n.phase);return;}
+      if(b.actor&&!b.actor.has('sit')){b.g.position.set(-6.1,0,4.35);b.g.rotation.y=n.h;animateBody(b,dt,0,'look',t,n.phase);return;}
       b.g.position.set(n.x,sitLift(b),n.z);b.g.rotation.y=n.h;animateBody(b,dt,0,'sit',t,n.phase);
       if(b.head)b.head.rotation.y=Math.sin(t*0.4+n.phase)*0.25;return;}
     const st=n.route[n.i];
@@ -45,6 +47,6 @@ function npcTick(dt,t){
     if(b.head)b.head.rotation.y=n.pose!=='play'&&n.wait>0?Math.sin(t*0.7+n.phase)*0.35:0;
   });
 }
-function npcTalk(n){SFX.play('pluck',{rate:0.8+n.said*0.1});n.said=(n.said+1)%n.lines.length;toast(n.name+': '+n.lines[n.said]);}
+function npcTalk(n){if(n.b.actor)n.b.actor.once('wave');SFX.play('pluck',{rate:0.8+n.said*0.1});n.said=(n.said+1)%n.lines.length;toast(n.name+': '+n.lines[n.said]);}
 
 const glowTex=mk(128,128,(g,w,h)=>{const r=g.createRadialGradient(64,64,0,64,64,64);r.addColorStop(0,'rgba(255,255,255,1)');r.addColorStop(0.4,'rgba(255,255,255,.42)');r.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=r;g.fillRect(0,0,w,h);},true);
