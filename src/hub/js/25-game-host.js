@@ -8,7 +8,7 @@ function openGame(i){
   document.body.appendChild(root);
   $('h-wrap').hidden=true;
   const ctl=new AbortController(),acs=[],AC=window.AudioContext||window.webkitAudioContext;
-  game={root:root,ctl:ctl,acs:acs,dead:false};
+  game={root:root,ctl:ctl,acs:acs,dead:false,id:m.id};
   const g=game;
   const win={THREE:window.THREE,devicePixelRatio:window.devicePixelRatio,matchMedia:q=>window.matchMedia(q),
     addEventListener:(t,f)=>window.addEventListener(t,f,{signal:ctl.signal}),

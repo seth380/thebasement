@@ -4,7 +4,14 @@
   "private": true,
   "description": "Basement Arcade: a walk-around 3D basement with arcade cabinets that launch minigames",
   "scripts": {
-    "build": "node tools/build.js"
+    "build": "node tools/build.js",
+    "start": "node server/server.js",
+    "dev": "node tools/build.js && node server/server.js"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.22.0"
+  }
 }
