@@ -81,5 +81,15 @@ window.GFX=(function(){
     g.setAttribute('color',new THREE.Float32BufferAttribute(cs,3));s.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));
     const pm=new THREE.PMREMGenerator(renderer),rt=pm.fromScene(s,0.04);scene.environment=rt.texture;pm.dispose();g.dispose();return rt;}
   function sunShadow(renderer,light,half,size){renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;light.castShadow=true;light.shadow.mapSize.set(size||2048,size||2048);const c=light.shadow.camera;c.left=-half;c.right=half;c.top=half;c.bottom=-half;c.near=1;c.far=half*6;light.shadow.bias=-0.0006;light.shadow.normalBias=0.04;c.updateProjectionMatrix();}
-  return {glowTex:glowTex,glow:glow,particles:particles,vignette:vignette,env:env,sunShadow:sunShadow};
+  /* loads a .glb from assets/models once and hands every caller its own copy; does nothing when the page has no assets */
+  const mcache={};
+  function model(file,cb){
+    const base=window.BASEMENT_ASSETS;if(!base||!THREE.GLTFLoader)return;
+    const hit=mcache[file];if(hit){if(hit.scene)cb(hit.scene.clone());else hit.q.push(cb);return;}
+    const e=mcache[file]={scene:null,q:[cb]};
+    new THREE.GLTFLoader().load(base+'models/'+file,g=>{g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});e.scene=g.scene;e.q.forEach(f=>{try{f(g.scene.clone());}catch(err){}});e.q=[];},undefined,()=>{});
+  }
+  /* scales and centres a loaded model so its longest side is `size` */
+  function fit(obj,size){const b=new THREE.Box3().setFromObject(obj),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),k=size/Math.max(s.x,s.y,s.z);obj.scale.multiplyScalar(k);obj.position.sub(c.multiplyScalar(k));const g=new THREE.Group();g.add(obj);return g;}
+  return {glowTex:glowTex,glow:glow,particles:particles,vignette:vignette,env:env,sunShadow:sunShadow,model:model,fit:fit};
 })();
