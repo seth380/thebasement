@@ -3,7 +3,7 @@ let mem={};try{mem=JSON.parse(localStorage.getItem('basement-v1'))||{};}catch(e)
 const store={getItem:k=>(k in mem?mem[k]:null),setItem:(k,v)=>{mem[k]=String(v);try{localStorage.setItem('basement-v1',JSON.stringify(mem));}catch(e){}}};
 const readJ=k=>{try{return JSON.parse(store.getItem(k))||{};}catch(e){return {};}};
 const firstRun=!store.getItem('hub-avatar');
-const av=Object.assign({name:'',species:0,color:0xff7a1a,hat:0},readJ('hub-avatar'));
+const av=Object.assign({name:'',species:0,color:0xff7a1a,hat:0,model:''},readJ('hub-avatar'));
 const SPECIES=[{name:'Bear',kind:'bear',head:0xb5733c},{name:'Cat',kind:'cat',head:0x9aa3b5},{name:'Bunny',kind:'bunny',head:0xf4efe6},{name:'Frog',kind:'frog',head:0x7ddc4a}];
 const COLORS=[0xff7a1a,0x7b5cff,0xff5fa2,0x1fc46b,0x2f9bff,0xff4d6d,0xffc928,0x1fb5a8,0x2a2540];
 const HATS=['None','Cap','Beanie','Crown','Party hat'];

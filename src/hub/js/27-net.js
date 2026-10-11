@@ -26,14 +26,15 @@ function netSay(b,text,life){
 function netStatusText(s){if(s.indexOf('game:')===0){const m=META.find(m=>m.id===s.slice(5));return m?'Playing '+m.name.split(' ').slice(-1)[0]:'';}return '';}
 function netAddPeer(p){
   netDropPeer(p.id);
-  const look={name:p.name||'Guest',species:p.av.species,color:p.av.color,hat:p.av.hat},m=makeAvatarModel(look);
+  const look={name:p.name||'Guest',species:p.av.species,color:p.av.color,hat:p.av.hat,model:p.av.model||''},m=makeAvatarModel(look);
+  const mm=modelFor(look.model);if(mm&&!m.actor)GFX.preload(mm.file,()=>{const q=NET.peers.get(p.id);if(q&&!q.m.actor)netAddPeer({id:p.id,name:p.name,av:p.av,x:q.x,z:q.z,h:q.h,s:q.s});});
   m.g.position.set(p.x,floorY(p.x),p.z);m.g.rotation.y=p.h;scene.add(m.g);
   NET.peers.set(p.id,{id:p.id,m:m,x:p.x,z:p.z,h:p.h,tx:p.x,tz:p.z,th:p.h,mv:0,tmv:0,s:p.s||'',phase:0,sitY:0,bub:netBubble(),name:look.name});
   netCount();
 }
 function netDropPeer(id){
   const p=NET.peers.get(id);if(!p)return;
-  scene.remove(p.m.g);p.m.g.traverse(o=>{if(o.geometry)o.geometry.dispose();});scene.remove(p.bub.sp);p.bub.t.dispose();p.bub.sp.material.dispose();
+  scene.remove(p.m.g);if(p.m.actor)p.m.actor.dispose();else p.m.g.traverse(o=>{if(o.geometry)o.geometry.dispose();});scene.remove(p.bub.sp);p.bub.t.dispose();p.bub.sp.material.dispose();
   NET.peers.delete(id);netCount();
 }
 function netCount(){
@@ -41,7 +42,7 @@ function netCount(){
   if(NET.on)b.textContent=(NET.peers.size?NET.peers.size+1+' here':'Just you')+' · room '+NET.room;
 }
 function netSend(o){if(NET.ws&&NET.ws.readyState===1)NET.ws.send(JSON.stringify(o));}
-function netLook(){return {name:av.name,av:{species:av.species,color:av.color,hat:av.hat}};}
+function netLook(){return {name:av.name,av:{species:av.species,color:av.color,hat:av.hat,model:av.model||''}};}
 function netConnect(){
   let ws;try{ws=new WebSocket(NET.url);}catch(e){return;}
   NET.ws=ws;
@@ -82,9 +83,9 @@ function netFrame(dt){
     p.x+=(p.tx-p.x)*k;p.z+=(p.tz-p.z)*k;
     let dh=p.th-p.h;dh=Math.atan2(Math.sin(dh),Math.cos(dh));p.h+=dh*k;
     p.mv+=(p.tmv-p.mv)*k;p.phase+=dt*9;
-    const sit=p.s==='sit',sw=Math.sin(p.phase)*0.7*p.mv,a=p.m;p.sitY+=((sit?0.2:0)-p.sitY)*Math.min(1,dt*10);
-    const y=floorY(p.x)+p.sitY;a.g.position.set(p.x,y+Math.abs(Math.sin(p.phase))*0.025*p.mv,p.z);a.g.rotation.y=p.h;
-    a.legs[0].rotation.x=sit?-1.45:sw;a.legs[1].rotation.x=sit?-1.45:-sw;a.arms[0].rotation.x=sit?-0.5:-sw*0.8;a.arms[1].rotation.x=sit?-0.5:sw*0.8;
+    const sit=p.s==='sit',a=p.m;p.sitY+=((sit?sitLift(a):0)-p.sitY)*Math.min(1,dt*10);
+    const y=floorY(p.x)+p.sitY;a.g.position.set(p.x,y+(a.actor?0:Math.abs(Math.sin(p.phase))*0.025*p.mv),p.z);a.g.rotation.y=p.h;
+    animateBody(a,dt,p.mv,sit?'sit':'walk',tvT,p.phase);
     const b=p.bub;if(b.life>0)b.life-=dt;
     if(b.life<=0){const st=netStatusText(p.s);if(st)netSay(b,st,0.5);else b.text='';}
     b.sp.visible=b.life>0&&!!b.text;b.sp.position.set(p.x,y+2.15,p.z);

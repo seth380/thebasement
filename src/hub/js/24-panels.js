@@ -10,7 +10,10 @@ function openCustom(first){
   mode='custom';$('h-custom').hidden=false;$('h-btns').hidden=true;$('h-prompt').hidden=true;
   $('h-c-title').textContent=first?'Make your character':'Your character';$('h-c-done').textContent=first?'Enter the basement':'Done';
   $('h-name').value=av.name;
-  fill('h-species',SPECIES.map(s=>s.name),av.species,i=>av.species=i);
+  /* animals first, then any model characters; picking an animal clears the model. Games always use your animal. */
+  const nA=SPECIES.length,mi=MODEL_CHARS.findIndex(m=>m.id===av.model);
+  fill('h-species',SPECIES.map(s=>s.name).concat(MODEL_CHARS.map(m=>m.name)),mi>=0?nA+mi:av.species,i=>{if(i<nA){av.species=i;av.model='';}else av.model=MODEL_CHARS[i-nA].id;});
+  MODEL_CHARS.forEach(m=>GFX.preload(m.file));
   fill('h-colors',COLORS,COLORS.indexOf(av.color),i=>av.color=COLORS[i],true);
   fill('h-hats',HATS,av.hat,i=>av.hat=i);
 }

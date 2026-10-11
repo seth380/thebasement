@@ -38,9 +38,25 @@ hub=must(hub,'<!--GAME_SCRIPTS-->','<script>\n'+read('shared/critter.js')+'\n'+r
 hub=must(hub,'<!--HUB_SCRIPT-->',"<script>\n(function(){\n'use strict';\n"+hubJs+'\n})();\n</script>');
 fs.mkdirSync(dist,{recursive:true});
 fs.writeFileSync(path.join(dist,'basement-arcade.html'),hub);
+/* character models: every .glb/.gltf under assets/models/characters and assets/models/npcs is picked up automatically.
+   An optional names.json in either folder maps a file name to a display name, e.g. {"Casual_Male.gltf":"Sam"} */
+function findModels(sub){
+  const dir=path.join(root,'assets/models',sub),out=[];if(!fs.existsSync(dir))return out;
+  let names={};try{names=JSON.parse(fs.readFileSync(path.join(dir,'names.json'),'utf8'));}catch(e){}
+  const walk=d=>fs.readdirSync(d,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name)).forEach(e=>{
+    const p=path.join(d,e.name);if(e.isDirectory())return walk(p);
+    if(!/\.(glb|gltf)$/i.test(e.name))return;
+    const rel=path.relative(path.join(root,'assets/models'),p).split(path.sep).join('/'),stem=e.name.replace(/\.(glb|gltf)$/i,'');
+    const nice=stem.replace(/([a-z])([A-Z])/g,'$1 $2').split(/[-_ ]+/).filter(w=>w&&!/^(character|characters|kenney|quaternius|model|rigged|animated|\d+)$/i.test(w)).map(w=>w[0].toUpperCase()+w.slice(1).toLowerCase()).join(' ')||stem;
+    out.push({id:rel.replace(/\.(glb|gltf)$/i,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40),name:names[e.name]||nice,file:rel});
+  });
+  walk(dir);return out;
+}
+const MODELS={characters:findModels('characters'),npcs:findModels('npcs')};
+console.log('models:',MODELS.characters.length,'characters,',MODELS.npcs.length,'npcs');
 /* the served page uses the copies in assets/ so it does not depend on a CDN */
-const local=must(hub,THREE_TAG,'<script src="assets/vendor/three.min.js"></script><script src="assets/vendor/GLTFLoader.js"></script>');
+const local=must(hub,THREE_TAG,'<script src="assets/vendor/three.min.js"></script><script src="assets/vendor/GLTFLoader.js"></script><script src="assets/vendor/SkeletonUtils.js"></script>');
 fs.cpSync(path.join(root,'assets'),path.join(dist,'assets'),{recursive:true});
-const page='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<style>html,body{margin:0;height:100%;background:#120e24}[hidden]{display:none!important}</style>\n<script>window.BASEMENT_SERVER="auto";window.BASEMENT_ASSETS="assets/";</script>\n</head>\n<body>\n'+local+'\n</body>\n</html>\n';
+const page='<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n<style>html,body{margin:0;height:100%;background:#120e24}[hidden]{display:none!important}</style>\n<script>window.BASEMENT_SERVER="auto";window.BASEMENT_ASSETS="assets/";window.BASEMENT_MODELS='+JSON.stringify(MODELS).replace(/</g,'\\u003c')+';</script>\n</head>\n<body>\n'+local+'\n</body>\n</html>\n';
 fs.writeFileSync(path.join(dist,'index.html'),page);
 console.log('built dist/index.html',page.length,'bytes');

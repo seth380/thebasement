@@ -34,12 +34,11 @@ function frame(now){
     P.x+=Math.sin(P.h)*fwd*sp*dt;P.z+=Math.cos(P.h)*fwd*sp*dt;collide();
   }
   P.move+=((fwd?1:0)-P.move)*Math.min(1,dt*10);P.phase+=dt*9*(fwd<0?-0.7:1);
-  const a=avatar,sw=Math.sin(P.phase)*0.7*P.move,sitting=mode==='sit';
-  sitY+=((sitting?0.2:0)-sitY)*Math.min(1,dt*10);
-  const fy=floorY(P.x);a.g.position.set(P.x,fy+sitY+Math.abs(Math.sin(P.phase))*0.025*P.move,P.z);a.g.rotation.y=P.h;
-  a.legs[0].rotation.x=sitting?-1.45:sw;a.legs[1].rotation.x=sitting?-1.45:-sw;
-  a.arms[0].rotation.x=sitting?-0.5:-sw*0.8;a.arms[1].rotation.x=sitting?-0.5:sw*0.8;
-  a.head.rotation.y=mode==='custom'?Math.sin(tvT*0.8)*0.25:0;a.head.position.y=1.14+Math.sin(tvT*2)*0.004;
+  const a=avatar,sitting=mode==='sit';
+  sitY+=((sitting?sitLift(a):0)-sitY)*Math.min(1,dt*10);
+  const fy=floorY(P.x);a.g.position.set(P.x,fy+sitY+(a.actor?0:Math.abs(Math.sin(P.phase))*0.025*P.move),P.z);a.g.rotation.y=P.h;
+  animateBody(a,dt,P.move,sitting?'sit':'walk',tvT,P.phase);
+  if(a.head){a.head.rotation.y=mode==='custom'?Math.sin(tvT*0.8)*0.25:0;a.head.position.y=1.14+Math.sin(tvT*2)*0.004;}
 
   /* camera */
   const fx=Math.sin(P.h),fz=Math.cos(P.h);

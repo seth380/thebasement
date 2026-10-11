@@ -91,5 +91,62 @@ window.GFX=(function(){
   }
   /* scales and centres a loaded model so its longest side is `size` */
   function fit(obj,size){const b=new THREE.Box3().setFromObject(obj),s=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3()),k=size/Math.max(s.x,s.y,s.z);obj.scale.multiplyScalar(k);obj.position.sub(c.multiplyScalar(k));const g=new THREE.Group();g.add(obj);return g;}
-  return {glowTex:glowTex,glow:glow,particles:particles,vignette:vignette,env:env,sunShadow:sunShadow,model:model,fit:fit};
+  /* ---- animated characters ----
+     GFX.preload(file, ok) loads a rigged .glb/.gltf once; GFX.actor(file, opts) then returns a fresh, independently
+     animated copy (or null if it has not loaded). Animations are found by name, so packs with different naming work:
+     actor.state('idle'|'walk'|'run'|'sit'|'wave'|'play'), actor.update(dt), actor.has('sit'). */
+  const rigs={};
+  const KINDS={idle:[/^idle$/i,/^idle[^a-z]/i,/idle/i],walk:[/^walk(ing)?$/i,/^walk[^a-z]/i,/walk/i],run:[/^run(ning)?$/i,/sprint/i,/^run[^a-z]/i,/run/i],
+    sit:[/^sit(ting)?$/i,/sitting/i,/sit[_ -]?idle/i,/^sit/i],wave:[/wave/i,/emote[-_ ]?yes/i,/victory/i,/cheer/i,/yes/i],
+    play:[/interact/i,/^use/i,/pick[-_ ]?up/i],dance:[/dance/i,/victory/i]};
+  const FALL={run:'walk',play:'idle',wave:'idle',dance:'wave',sit:'idle'};
+  function preload(file,ok){
+    const base=window.BASEMENT_ASSETS;if(!base||!THREE.GLTFLoader||!THREE.SkeletonUtils){return;}
+    let r=rigs[file];if(r){if(r.gltf)ok&&ok();else if(ok)r.q.push(ok);return;}
+    r=rigs[file]={gltf:null,q:ok?[ok]:[],failed:false};
+    new THREE.GLTFLoader().load(base+'models/'+file,g=>{
+      g.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;if(o.material&&o.material.map)o.material.map.anisotropy=4;}});
+      r.gltf=g;r.q.forEach(f=>{try{f();}catch(e){}});r.q=[];
+    },undefined,()=>{r.failed=true;r.q=[];});
+  }
+  function pickClip(clips,kind){
+    for(const re of (KINDS[kind]||[new RegExp(kind,'i')])){const c=clips.find(c=>re.test(c.name)&&!/carry|gun|sword|pistol|rifle|wheelchair|holding/i.test(c.name));if(c)return c;}
+    for(const re of (KINDS[kind]||[]) ){const c=clips.find(c=>re.test(c.name));if(c)return c;}
+    return null;
+  }
+  function actor(file,opts){
+    const r=rigs[file];if(!r||!r.gltf)return null;opts=opts||{};
+    const body=THREE.SkeletonUtils.clone(r.gltf.scene);
+    /* stand it on the floor, centred, opts.height tall, facing +z like the rest of the game */
+    body.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(body),sz=box.getSize(new THREE.Vector3());
+    const k=(opts.height||1.5)/Math.max(0.01,sz.y);body.scale.multiplyScalar(k);
+    body.position.set(-(box.min.x+box.max.x)/2*k,-box.min.y*k,-(box.min.z+box.max.z)/2*k);
+    const g=new THREE.Group(),turn=new THREE.Group();turn.rotation.y=opts.yaw||0;turn.add(body);g.add(turn);
+    const mixer=new THREE.AnimationMixer(body),clips=r.gltf.animations||[],acts={};
+    function act(kind){
+      if(kind in acts)return acts[kind];
+      const c=pickClip(clips,kind);acts[kind]=c?mixer.clipAction(c):null;
+      if(acts[kind]&&/down|up$|start|end/i.test(c.name)&&kind==='sit'){acts[kind].setLoop(THREE.LoopOnce,1);acts[kind].clampWhenFinished=true;}
+      return acts[kind];
+    }
+    let cur=null,curKind='';
+    const a={g:g,body:body,mixer:mixer,height:opts.height||1.5,
+      has:kind=>!!act(kind),
+      state(kind,fade){
+        if(kind===curKind)return;let n=act(kind),k2=kind;
+        while(!n&&FALL[k2]){k2=FALL[k2];n=act(k2);}
+        curKind=kind;if(!n||n===cur)return;
+        n.reset();n.enabled=true;n.setEffectiveWeight(1);n.play();
+        if(cur)cur.crossFadeTo(n,fade===undefined?0.25:fade,false);cur=n;
+      },
+      speed(x){if(cur)cur.timeScale=x;},
+      update(dt){mixer.update(dt);},
+      bone(re){let b=null;body.traverse(o=>{if(!b&&o.isBone&&re.test(o.name))b=o;});if(!b)body.traverse(o=>{if(!b&&re.test(o.name)&&!o.isMesh)b=o;});return b;},
+      dispose(){mixer.stopAllAction();}};
+    a.state(opts.start||'idle',0);
+    return a;
+  }
+  /* the models found in assets/models when the game was built: {characters:[{id,name,file}], npcs:[...]} */
+  const roster=window.BASEMENT_MODELS||{characters:[],npcs:[]};
+  return {glowTex:glowTex,glow:glow,particles:particles,vignette:vignette,env:env,sunShadow:sunShadow,model:model,fit:fit,preload:preload,actor:actor,roster:roster};
 })();

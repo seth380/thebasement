@@ -19,7 +19,7 @@ src/hub/index.html   page shell, styles and panels for the basement
 src/hub/js/          the basement, one file per section, joined in name order
 src/games/           one self-contained page per cabinet (Fogbound Isle is in parts)
 src/shared/          character model, graphics helpers and the sound engine used by every game
-assets/              sounds and vendored libraries; credits are in ASSETS.md
+assets/              sounds, character models and vendored libraries; credits are in ASSETS.md
 tools/build.js       joins everything into dist/
 server/server.js     serves dist/ and runs the multiplayer rooms
 ```
@@ -41,7 +41,26 @@ When the game is served by `server/server.js`, everyone on the same link sees ea
 - Rooms hold up to 12 people. There are no accounts and no chat; names are the only free text other people see.
 - The minigames themselves are still single player.
 
-## Hosting
+## Hosting at home
+
+The server runs on Node, not Python, so uvicorn won't run it. Install Node once:
+
+1. Install the **LTS** version from https://nodejs.org (the default options are fine).
+2. Get the code: `git clone https://github.com/seth380/thebasement` (or download the ZIP from GitHub and unzip it).
+3. In that folder, run `npm install`, then `npm run dev`.
+4. Open http://localhost:8080 on that computer.
+
+**Other devices in the house:** open `http://<that computer's address>:8080` on the same Wi-Fi. Find the address with `ipconfig` on Windows (the IPv4 address) or in System Settings → Wi-Fi → Details on a Mac. Allow Node through the firewall if asked.
+
+**Friends at their own houses:** either deploy to Render (below), or run a free Cloudflare quick tunnel while you play:
+
+1. Install `cloudflared` from https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/
+2. With the game running, run `cloudflared tunnel --url http://localhost:8080`.
+3. It prints a `https://….trycloudflare.com` link; send that. The link changes each time you start the tunnel and stops working when you close it.
+
+After pulling new changes, stop the server (Ctrl+C) and run `npm run dev` again.
+
+## Hosting online
 
 The server is one small Node process that serves the game and relays positions over a WebSocket at `/ws`, so any host that runs Node and allows WebSockets works. `render.yaml` sets it up on Render's free plan (New > Blueprint > pick this repo); the free plan sleeps when idle, so the first visit after a quiet spell takes a little while to wake.
 

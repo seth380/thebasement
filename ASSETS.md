@@ -10,12 +10,14 @@ Everything in `assets/` was made by someone else and is used under the licence s
 | `audio/place_*`, `remove_*` | [Starter Kit City Builder](https://github.com/KenneyNL/Starter-Kit-City-Builder) | Kenney | CC0 |
 | `audio/tile_land`, `tile_match`, `tile_swap` | [Starter Kit Match-3](https://github.com/KenneyNL/Starter-Kit-Match-3) | Kenney | CC0 |
 | `audio/bong`, `click`, `click2`, `close`, `confirm`, `drop`, `drop2`, `error`, `exit`, `glass`, `goal`, `join`, `leave`, `open`, `pluck`, `scrape`, `select`, `start`, `switch`, `tick`, `toggle`, `win` | [Interface Sounds](https://kenney.nl/assets/interface-sounds), via [Calinou/kenney-interface-sounds](https://github.com/Calinou/kenney-interface-sounds) | Kenney | CC0 |
-| `vendor/three.min.js`, `vendor/GLTFLoader.js` | [three.js r128](https://github.com/mrdoob/three.js) | three.js authors | MIT |
+| `models/characters/kenney-soldier.glb` and its `Textures/colormap.png` | [Starter Kit Basic Scene](https://github.com/KenneyNL/Starter-Kit-Basic-Scene) (Mini Arena) | Kenney | CC0 |
+| `vendor/three.min.js`, `vendor/GLTFLoader.js`, `vendor/SkeletonUtils.js` | [three.js r128](https://github.com/mrdoob/three.js) | three.js authors | MIT |
 
 The audio files were converted to mono mp3 and renamed; nothing else was changed.
 
 ## Adding more
 
 - Sounds go in `assets/audio/` as mp3. Add the name to the `FILES` list in `src/shared/sfx.js`, then call `SFX.play('name')`.
-- 3D models go in `assets/models/` as `.glb`. Load one with `GFX.model('folder/file.glb', model => scene.add(model))`.
+- Animated characters go in `assets/models/characters/` or `assets/models/npcs/`; see `assets/models/README.md`.
+- Static 3D models go elsewhere under `assets/models/`. Load one with `GFX.model('folder/file.glb', model => scene.add(model))`.
 - Only use CC0 or similarly permissive assets, and record them in the table above.
