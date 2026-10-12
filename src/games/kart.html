@@ -19,6 +19,8 @@ body{background:var(--sky-low);color:var(--ink);font-family:var(--body);font-wei
 #lapbox{position:absolute;right:16px;top:16px;padding:6px 12px;text-align:right;font-variant-numeric:tabular-nums}
 #lapbox b{font-family:var(--display);font-weight:400;font-size:22px;display:block;line-height:1.1}
 #lapbox span{font-size:16px}
+#power{position:absolute;left:16px;top:84px;padding:4px 10px;font-size:13px;letter-spacing:.08em;transform:rotate(-2deg)}
+#power b{color:#ff4d6d;font-size:16px;letter-spacing:.1em}#power i{font-style:normal;opacity:.25}
 #map{position:absolute;right:16px;top:86px;width:110px;height:110px;opacity:.95}
 #tools{position:absolute;left:50%;top:16px;transform:translateX(-50%);display:flex;gap:8px}
 #tools button{font:700 13px var(--body);color:var(--ink);background:var(--cream);border:2px solid var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
@@ -66,6 +68,7 @@ button:focus-visible{outline:3px solid var(--grape);outline-offset:2px}
       <button id="rst" type="button">Back on course</button>
     </div>
     <div id="lapbox" class="sticker"><b id="lap">Lap 1/3</b><span id="time">0:00.00</span></div>
+    <div id="power" class="sticker" hidden></div>
     <canvas id="map" width="220" height="220"></canvas>
     <div id="toast"></div>
     <div id="big"></div>
@@ -125,17 +128,22 @@ const EVENTS=[
   {id:'pine',name:'Pinecone Pass',veh:'kart',label:'Kart',laps:3,sc:1.5,W:11,pads:[0.05,0.33,0.6,0.86],ai:[55,1.6],curvK:0.5,
    sky:['#5f8fd6','#e9f1fb'],fog:[0xe9f1fb,300,1100],
    pts:[[0,0,0],[70,2,0],[130,8,-20],[160,18,-70],[130,28,-120],[70,34,-110],[40,40,-150],[60,48,-200],[10,52,-230],[-50,44,-200],[-40,34,-140],[-90,30,-100],[-140,22,-120],[-170,12,-70],[-130,4,-20],[-70,0,0]]},
-  {id:'lagoon',name:'Coconut Lagoon',veh:'ski',label:'Jet ski',laps:3,sc:1.6,W:17,pads:[0.1,0.36,0.62,0.85],ai:[50,1.5],curvK:0.42,
+  {id:'lagoon',name:'Coconut Lagoon',veh:'ski',label:'Jet ski',laps:3,sc:1.6,W:17,pads:[0.1,0.36,0.62,0.85],ai:[50,1.5],curvK:0.42,jumps:[[0.24,0],[0.5,-5],[0.78,5]],
    sky:['#19a7e0','#d9fbff'],fog:[0xd9fbff,300,1100],
    pts:[[0,0,0],[80,0,10],[150,0,-30],[170,0,-100],[120,0,-150],[50,0,-130],[0,0,-170],[-70,0,-190],[-140,0,-150],[-150,0,-80],[-100,0,-40],[-110,0,20],[-60,0,50]]},
-  {id:'sky',name:'Cloudtop Run',veh:'plane',label:'Plane',laps:2,sc:1.35,W:20,pads:[],ai:[63,1.7],curvK:0.3,
-   sky:['#5a6fe0','#ffd9c2'],fog:[0xffd9c2,400,1500],
+  /* Wave Race style: big rolling swells, a lighthouse, ramps, and buoys to pass on the correct side */
+  {id:'sunset',name:'Sunset Bay',veh:'ski',label:'Jet ski',laps:3,sc:1.7,W:18,pads:[0.2,0.56,0.82],ai:[50,1.5],curvK:0.42,swell:true,buoys:true,
+   jumps:[[0.12,0],[0.33,-6],[0.47,6],[0.7,0],[0.9,-5]],sky:['#ff7a45','#ffd59a'],fog:[0xffc08a,260,1000],
+   pts:[[0,0,0],[90,0,-15],[160,0,-60],[150,0,-140],[90,0,-180],[30,0,-150],[-20,0,-200],[-100,0,-210],[-160,0,-160],[-140,0,-90],[-170,0,-30],[-120,0,30],[-50,0,30]]},
+  /* Pilotwings style: bright sky, rolling green islands, big glowing rings; the plane follows the course unless you steer */
+  {id:'sky',name:'Cloudtop Run',veh:'plane',label:'Plane',laps:2,sc:1.35,W:26,pads:[],ai:[57,1.5],curvK:0.3,
+   sky:['#3f8ff0','#e6f5ff'],fog:[0xdcefff,420,1700],
    pts:[[0,60,0],[120,70,-20],[220,95,-90],[240,120,-190],[160,100,-260],[40,70,-240],[-40,45,-300],[-150,60,-280],[-230,90,-200],[-220,110,-90],[-140,80,-20],[-70,65,20]]}
 ];
 const HOW={
   kart:['Arrow keys or WASD to drive. Space brakes. R puts you back on the road. Hills slow you on the way up and speed you up on the way down.','Gas is automatic. Use the buttons to steer and brake.'],
-  ski:['Arrow keys or WASD to ride. Space brakes. The jet ski slides in turns, so start turning early. Stay between the red and green buoys.','Gas is automatic. Steer early: the jet ski slides. Stay between the buoys.'],
-  plane:['Left and right steer. Up climbs and down dives. Space is the air brake. Fly through the rings; the orange ones give a boost.','Throttle is automatic. Use the arrows to steer, climb and dive. Orange rings give a boost.']
+  ski:['Arrow keys or WASD to ride. Space brakes. The jet ski slides in turns, so start turning early. Hit the ramps, and hold left or right in the air to spin: land a full spin for a boost. On Sunset Bay, pass red buoys on your right and yellow on your left to build power.','Gas is automatic. Steer early: the jet ski slides. Hold a direction in the air to spin; land a full spin for a boost.'],
+  plane:['The plane follows the course by itself: steer with left and right, climb and dive with up and down. Space is the air brake. Fly through the rings; gold ones give a boost.','Throttle and steering help are automatic. Nudge the arrows to line up the rings. Gold rings give a boost.']
 };
 
 let renderer;
@@ -147,7 +155,7 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0xd6f3ff,260,950);
 const camera=new THREE.PerspectiveCamera(62,1,0.5,2600);
-scene.add(new THREE.HemisphereLight(0xffffff,0x88b060,0.85));
+const hemi=new THREE.HemisphereLight(0xffffff,0x88b060,0.85);scene.add(hemi);
 const sun=new THREE.DirectionalLight(0xfff2cc,0.75); sun.position.set(60,120,40); scene.add(sun);scene.add(sun.target);
 const lowFx=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
 if(!lowFx)GFX.sunShadow(renderer,sun,75,2048);
@@ -188,6 +196,8 @@ const padMat=new THREE.MeshBasicMaterial({map:padTex,side:THREE.DoubleSide});
 /* ---------- world (rebuilt for each race) ---------- */
 let world=null,ev=EVENTS[0],S=[],T=[],NR=[],CURV=[],HL=[],segLen=1,W=11,PADS=[],RINGS=[],balloons=[],waterTex=null,ringNext=0;
 const wave=(x,z,t)=>Math.sin(x*0.08+t*1.6)*0.45+Math.sin(z*0.11+t*1.2)*0.35;
+/* the water height a jet ski rides on: small chop, or long Wave Race swells on Sunset Bay */
+const sea=(x,z,t)=>ev&&ev.swell?Math.sin(x*0.03+t*0.9)*1.5+Math.sin(z*0.024+x*0.008+t*0.7)*1.2+wave(x,z,t)*0.25:wave(x,z,t)*0.4;
 function nearest(x,z){let b=1e18,bi=0;for(let i=0;i<N;i+=2){const dx=x-S[i].x,dz=z-S[i].z,q=dx*dx+dz*dz;if(q<b){b=q;bi=i;}}return [bi,Math.sqrt(b)];}
 function hill(x,z){return ev.id==='pine'?26+70*Math.abs(Math.sin(x*0.0061+1)*Math.cos(z*0.0068)):3+7*Math.sin(x*0.013)*Math.cos(z*0.011);}
 function groundH(x,z){const r=nearest(x,z),base=S[r[0]].y-0.9;if(r[1]<40)return base;const k=Math.min(1,(r[1]-40)/110),s=k*k*(3-2*k);return base*(1-s)+hill(x,z)*s;}
@@ -254,11 +264,75 @@ function clouds(n,y0,y1,near){
     world.add(g);
   }
 }
+let swellMesh=null;const SWELL_W=416.67;/* ten tiles of the water texture, so its pattern lines up with the sea around it */
+/* Sunset Bay: rocky islets, a lighthouse, a pier, sailboats and dolphins */
+function sunsetScenery(cx,cz,mnx,mxx,mnz,mxz){
+  const rk=new THREE.MeshPhongMaterial({color:0x8a6a5a,flatShading:true,shininess:0}),rk2=new THREE.MeshPhongMaterial({color:0x6f5650,flatShading:true,shininess:0});
+  let made=0;
+  for(let n=0;n<400&&made<16;n++){const x=mnx-220+rnd()*(mxx-mnx+440),z=mnz-220+rnd()*(mxz-mnz+440),r=14+rnd()*40;if(nearest(x,z)[1]<W*2.6+r+8)continue;made++;
+    const m=new THREE.Mesh(new THREE.DodecahedronGeometry(r,0),rnd()<0.5?rk:rk2);m.position.set(x,-r*0.35,z);m.scale.y=0.5+rnd()*0.7;m.rotation.y=rnd()*6;world.add(m);}
+  /* the lighthouse on its rock, inside the bay */
+  {let best=null;for(let n=0;n<200;n++){const x=mnx+rnd()*(mxx-mnx),z=mnz+rnd()*(mxz-mnz),d=nearest(x,z)[1];if(d>W*2.4+26&&(!best||d<best[2]))best=[x,z,d];}
+   if(best){const g=new THREE.Group();g.position.set(best[0],0,best[1]);world.add(g);
+     const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(22,0),rk);rock.scale.y=0.45;rock.position.y=-2;g.add(rock);
+     for(let k=0;k<6;k++){const c=new THREE.Mesh(new THREE.CylinderGeometry(3.6-k*0.25,3.85-k*0.25,4,16),lam(k%2?0xff4d4d:0xfff8e7));c.position.y=8+k*4;g.add(c);}
+     const lamp=new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.4,3,12),new THREE.MeshBasicMaterial({color:0xfff2b0}));lamp.position.y=33.5;g.add(lamp);
+     const cap=new THREE.Mesh(new THREE.ConeGeometry(3.2,3,12),lam(0x2a2540));cap.position.y=36.5;g.add(cap);
+     const glow=GFX.glow(0xffe8a0,30,0.75);glow.position.y=33.5;g.add(glow);}}
+  /* a wooden pier near the start */
+  {const i=4,lat=W+16,h=Math.atan2(T[i].x,T[i].z),g=new THREE.Group();g.position.set(S[i].x+NR[i].x*lat,0,S[i].z+NR[i].z*lat);g.rotation.y=h+Math.PI/2;world.add(g);
+   const wd=lam(0xa0703f);const deck=new THREE.Mesh(new THREE.BoxGeometry(40,0.6,5),wd);deck.position.set(14,2.2,0);g.add(deck);
+   for(let x=-4;x<=34;x+=4)[-2.2,2.2].forEach(z=>{const p=new THREE.Mesh(new THREE.CylinderGeometry(0.35,0.35,5,6),lam(0x7a5230));p.position.set(x,0,z);g.add(p);});
+   const hut=new THREE.Mesh(new THREE.BoxGeometry(6,4,6),lam(0xf0e2c4));hut.position.set(34,4.5,0);g.add(hut);const roof=new THREE.Mesh(new THREE.ConeGeometry(5,3,4),lam(0x2f8fc0));roof.position.set(34,8,0);roof.rotation.y=Math.PI/4;g.add(roof);}
+  /* sailboats out on the horizon */
+  for(let k=0;k<6;k++){const a=k/6*6.283+rnd(),r=520+rnd()*200,g=new THREE.Group();g.position.set(cx+Math.cos(a)*r,0,cz+Math.sin(a)*r);g.rotation.y=rnd()*6;world.add(g);
+    const hull=new THREE.Mesh(new THREE.BoxGeometry(4,1.4,12),lam(0xfff8e7));hull.position.y=0.6;g.add(hull);
+    const sail=new THREE.Mesh(new THREE.ConeGeometry(4.5,14,3),lam([0xff4d6d,0xffc928,0x2f9bff][k%3]));sail.position.y=8.5;sail.scale.z=0.15;g.add(sail);}
+  /* dolphins: arcs that leap beside the course */
+  const dm=lam(0x7d97b4);
+  for(let k=0;k<4;k++){const i=Math.floor((k+0.5)/4*N),lat=(k%2?1:-1)*(W*1.6),g=new THREE.Group();g.position.set(S[i].x+NR[i].x*lat,0,S[i].z+NR[i].z*lat);g.rotation.y=Math.atan2(T[i].x,T[i].z);world.add(g);
+    const body=new THREE.Mesh(new THREE.SphereGeometry(1.1,10,8),dm);body.scale.set(0.8,0.8,2.6);g.add(body);const fin=new THREE.Mesh(new THREE.ConeGeometry(0.5,1.2,4),dm);fin.position.set(0,1,0);g.add(fin);
+    const tail=new THREE.Mesh(new THREE.BoxGeometry(2,0.15,0.7),dm);tail.position.z=-2.8;g.add(tail);
+    balloons.push({g:g,p:k*1.7,y:0,dolphin:true,x0:g.position.x,z0:g.position.z,h:g.rotation.y});}
+}
+/* Pilotwings: one smooth terrain of rolling green islands, farm-field patches, sandy shores and a snowy peak, under hazy blue sky */
+function pilotIsland(cx,cz){
+  const sea=new THREE.Mesh(new THREE.PlaneGeometry(9000,9000),new THREE.MeshBasicMaterial({color:0x2a6fd1}));sea.rotation.x=-Math.PI/2;sea.position.set(cx,0,cz);world.add(sea);
+  const SZ=2600,R=110,g=new THREE.PlaneGeometry(SZ,SZ,R,R);g.rotateX(-Math.PI/2);
+  const p=g.attributes.position,col=new Float32Array(p.count*3),c=new THREE.Color();
+  const pk=[cx+760,cz-700];
+  for(let q=0;q<p.count;q++){
+    const x=p.getX(q)+cx,z=p.getZ(q)+cz;
+    /* islands: a few big blobs of land, rolling hills on top, and one mountain */
+    const isl=Math.max(0,0.85-Math.hypot((x-cx)/900,(z-cz)/760))*1.6+0.35*Math.sin(x*0.004+1.3)*Math.cos(z*0.0047)-0.25;
+    let h=isl>0?isl*30+isl*12*(Math.sin(x*0.013)*Math.cos(z*0.011)+1):isl*40;
+    const dm=Math.hypot(x-pk[0],z-pk[1]);if(dm<460)h+=Math.pow(1-dm/460,1.5)*300;
+    /* the land always stays well below the course, so you fly over it (not through a canyon) */
+    const near=nearest(x,z);h=Math.min(h,S[near[0]].y-45+Math.max(0,near[1]-60)*0.5);
+    h=Math.max(-8,h);p.setY(q,h);
+    /* colour by height, with patchwork fields on the flat green */
+    if(h<2)c.setHex(0x3a8bd8);else if(h<7)c.setHex(0xf4e1a4);else if(h>190)c.setHex(0xffffff);else if(h>120)c.setHex(0x9b958c);
+    else{const fx=Math.floor(x/70),fz=Math.floor(z/90),r=Math.abs(Math.sin(fx*12.9898+fz*78.233)*43758.5)%1;
+      c.setHex(h<45&&r<0.55?[0x9bd648,0xe2cf62,0x3f9a3a,0xb48a52,0xc6e070][Math.floor(r*8.9)%5]:h<60?0x52b04a:0x3f9640);}
+    col[q*3]=c.r;col[q*3+1]=c.g;col[q*3+2]=c.b;}
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));g.computeVertexNormals();
+  const land=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));land.position.set(cx,0,cz);world.add(land);
+  /* a few red-roofed houses and the landing pad beside the start */
+  const wall=lam(0xfff6e0),roof=lam(0xd84a3a);
+  for(let k=0;k<14;k++){const x=cx-600+rnd()*1200,z=cz-500+rnd()*1000;let y=-99;
+    {const rc=new THREE.Raycaster(new THREE.Vector3(x,500,z),new THREE.Vector3(0,-1,0));const hit=rc.intersectObject(land);if(hit[0])y=hit[0].point.y;}
+    if(y<8||y>70)continue;const hs=new THREE.Group();hs.position.set(x,y,z);hs.rotation.y=rnd()*3;world.add(hs);
+    const b=new THREE.Mesh(new THREE.BoxGeometry(14,9,11),wall);b.position.y=4.5;hs.add(b);const r=new THREE.Mesh(new THREE.ConeGeometry(11,7,4),roof);r.position.y=12.5;r.rotation.y=Math.PI/4;r.scale.z=0.8;hs.add(r);}
+  {const i=N-24,pad=new THREE.Mesh(new THREE.CylinderGeometry(26,26,1,40),new THREE.MeshBasicMaterial({map:canvasTex(256,256,q=>{const cc=['#ff4d6d','#fff8e7','#2f9bff','#fff8e7','#ffc928'];for(let r=5;r>0;r--){q.fillStyle=cc[5-r];q.beginPath();q.arc(128,128,r*25,0,7);q.fill();}})}));
+    pad.position.set(S[i].x+NR[i].x*70,1,S[i].z+NR[i].z*70);world.add(pad);}
+}
 function buildWorld(e){
   if(world){scene.remove(world);world.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material!==padMat){const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach(m=>{if(m.map&&m.map!==checker&&m.map!==padTex)m.map.dispose();m.dispose();});}});}
   ev=e;world=new THREE.Group();scene.add(world);seed=EVENTS.indexOf(e)*7919+20261011;balloons=[];RINGS=[];waterTex=null;W=e.W;
   $('game').style.background='linear-gradient('+e.sky[0]+','+e.sky[1]+' 62%)';
   scene.fog.color.setHex(e.fog[0]);scene.fog.near=e.fog[1];scene.fog.far=e.fog[2];
+  const low=e.id==='sunset';sun.color.setHex(low?0xffa060:0xfff2cc);sun.intensity=low?0.95:0.75;hemi.color.setHex(low?0xffd2b0:0xffffff);hemi.groundColor.setHex(low?0x5a6aa0:0x88b060);
+  sunGlow.material.color.setHex(low?0xff9a50:0xfff0c0);sunGlow.scale.setScalar(low?900:620);sunHalo.material.color.setHex(low?0xff8a40:0xffe0a0);
   const curve=new THREE.CatmullRomCurve3(e.pts.map(p=>new THREE.Vector3(p[0]*e.sc,p[1],p[2]*e.sc)),true,'centripetal');
   S=curve.getSpacedPoints(N).slice(0,N);T=[];NR=[];CURV=[];HL=[];
   for(let i=0;i<N;i++){const a=S[(i+N-1)%N],b=S[(i+1)%N],t=new THREE.Vector3().subVectors(b,a).normalize();T.push(t);
@@ -310,18 +384,43 @@ function buildWorld(e){
     }
     clouds(12,170,250);arch();
   }
+  RAMPS=[];BUOYS=[];swellMesh=null;
   if(e.veh==='ski'){
-    waterTex=canvasTex(256,256,g=>{g.fillStyle='#1fc3d6';g.fillRect(0,0,256,256);g.strokeStyle='rgba(255,255,255,.38)';g.lineWidth=4;g.lineCap='round';
+    waterTex=canvasTex(256,256,g=>{g.fillStyle=e.swell?'#2b8fc0':'#1fc3d6';g.fillRect(0,0,256,256);g.strokeStyle='rgba(255,255,255,.38)';g.lineWidth=4;g.lineCap='round';
       for(let i=0;i<26;i++){const x=rnd()*256,y=rnd()*256,l=18+rnd()*30;g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+l/2,y-7,x+l,y);g.stroke();}
       g.fillStyle='rgba(0,90,140,.16)';for(let i=0;i<14;i++){g.beginPath();g.ellipse(rnd()*256,rnd()*256,30+rnd()*30,12+rnd()*10,0,0,7);g.fill();}});
     waterTex.wrapS=waterTex.wrapT=THREE.RepeatWrapping;waterTex.repeat.set(120,120);
-    const wp=new THREE.Mesh(new THREE.PlaneGeometry(5000,5000),new THREE.MeshBasicMaterial({map:waterTex}));wp.rotation.x=-Math.PI/2;wp.position.set(cx,0,cz);world.add(wp);
+    const wp=new THREE.Mesh(new THREE.PlaneGeometry(5000,5000),new THREE.MeshBasicMaterial({map:waterTex,color:e.swell?0xffd4b0:0xffffff}));wp.rotation.x=-Math.PI/2;wp.position.set(cx,e.swell?-0.6:0,cz);world.add(wp);
+    /* under swells the flat sea is drawn first without depth, so the troughs of the swell patch never dip behind it */
+    if(e.swell){wp.material.depthWrite=false;wp.renderOrder=-1;}
+    /* the swells you can see: a moving patch of water around the player that rises and falls with sea() */
+    /* it is unlit like the sea around it (shading comes from the slope toward the low sun) and flattens out at its edges, so there is no seam */
+    if(e.swell){const t=waterTex.clone();t.needsUpdate=true;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(10,10);
+      const g=new THREE.PlaneGeometry(SWELL_W,SWELL_W,90,90);g.rotateX(-Math.PI/2);g.setAttribute('color',new THREE.BufferAttribute(new Float32Array(91*91*3).fill(1),3));
+      swellMesh=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:t,color:0xffd4b0,vertexColors:true}));swellMesh.userData.c=[cx,cz];world.add(swellMesh);}
+    /* ramps: striped wedges on floats */
+    const rampT=canvasTex(64,128,g=>{for(let y=0;y<128;y+=32){g.fillStyle='#ffc928';g.fillRect(0,y,64,16);g.fillStyle='#ff4d6d';g.fillRect(0,y+16,64,16);}});
+    (e.jumps||[]).forEach(q=>{const i=Math.floor(q[0]*N),lat=q[1],h=Math.atan2(T[i].x,T[i].z),grp=new THREE.Group();
+      grp.position.set(S[i].x+NR[i].x*lat,0,S[i].z+NR[i].z*lat);grp.rotation.y=h;world.add(grp);
+      const top=new THREE.Mesh(new THREE.BoxGeometry(9,0.4,7.5),new THREE.MeshLambertMaterial({map:rampT}));top.rotation.x=-0.31;top.position.set(0,1.1,0);grp.add(top);
+      [-1,1].forEach(sd=>{const fl=new THREE.Mesh(new THREE.CylinderGeometry(0.7,0.7,7.5,10),lam(0xfff8e7));fl.rotation.x=Math.PI/2;fl.position.set(sd*4.2,0.1,0);grp.add(fl);
+        const side=new THREE.Mesh(new THREE.BoxGeometry(0.3,2.3,0.3),lam(0x2a2540));side.position.set(sd*4.4,1.2,-3.4);grp.add(side);});
+      RAMPS.push({i:i,lat:lat,g:grp});});
+    /* slalom buoys */
+    if(e.buoys){const bg=new THREE.CylinderGeometry(1.1,1.4,3.2,12),tg=new THREE.SphereGeometry(0.9,10,8);let red=true;
+      for(let i=10;i<N-6;i+=Math.floor(N/16)){if(RAMPS.some(r=>Math.abs(r.i-i)<6))continue;
+        const lat=(red?-1:1)*W*0.32,grp=new THREE.Group();grp.position.set(S[i].x+NR[i].x*lat,0,S[i].z+NR[i].z*lat);world.add(grp);
+        const m=new THREE.Mesh(bg,lam(red?0xff3b3b:0xffd23f));m.position.y=1.2;grp.add(m);const t=new THREE.Mesh(tg,lam(0xfff8e7));t.position.y=3.1;grp.add(t);
+        const stripe=new THREE.Mesh(new THREE.CylinderGeometry(1.2,1.25,0.5,12),lam(0xfff8e7));stripe.position.y=1.5;grp.add(stripe);
+        BUOYS.push({i:i,lat:lat,red:red,g:grp,flash:0,ok:true});red=!red;}}
     PADS.forEach(i=>quadAt(i,5,2,padMat,0.2));
     quadAt(0,W,1,new THREE.MeshBasicMaterial({map:checker,side:THREE.DoubleSide,transparent:true,opacity:0.85}),0.15);
     {const wd=C(0xeafcff);ribbon(-0.45,0.45,0.12,i=>(i%8<3?wd:null));}
     const bg=new THREE.SphereGeometry(1.5,10,8),nb=Math.floor(N/10),br=new THREE.InstancedMesh(bg,lam(0xff4d6d),nb),bgn=new THREE.InstancedMesh(bg,lam(0x2fd08a),nb),d=new THREE.Object3D();
     for(let k=0;k<nb;k++){const i=k*10;d.position.set(S[i].x+NR[i].x*W,0.5,S[i].z+NR[i].z*W);d.updateMatrix();br.setMatrixAt(k,d.matrix);d.position.set(S[i].x-NR[i].x*W,0.5,S[i].z-NR[i].z*W);d.updateMatrix();bgn.setMatrixAt(k,d.matrix);}
     world.add(br,bgn);
+    if(e.swell)sunsetScenery(cx,cz,mnx,mxx,mnz,mxz);
+    else{
     const sand=new THREE.MeshPhongMaterial({color:0xf6dc9a,flatShading:true,shininess:0}),grass=new THREE.MeshPhongMaterial({color:0x4fbf52,flatShading:true,shininess:0}),lm=new THREE.MeshPhongMaterial({color:0x2aa85a,flatShading:true,shininess:0});
     let made=0;
     for(let n=0;n<400&&made<22;n++){
@@ -334,19 +433,18 @@ function buildWorld(e){
         for(let q=0;q<6;q++){const lf=new THREE.Mesh(new THREE.ConeGeometry(0.9,5.5,4),lm);lf.position.y=h;lf.rotation.set(1.25,q*1.047,0,'YXZ');lf.translateY(2.4);g.add(lf);}
         world.add(g);}
     }
-    clouds(12,150,230);arch();
+    }
+    clouds(e.swell?7:12,150,230);arch();
   }
   if(e.veh==='plane'){
-    const sea=new THREE.Mesh(new THREE.PlaneGeometry(8000,8000),new THREE.MeshBasicMaterial({color:0x2f77c9}));sea.rotation.x=-Math.PI/2;sea.position.set(cx,0,cz);world.add(sea);
-    const gm=new THREE.MeshPhongMaterial({color:0x4fae5a,flatShading:true,shininess:0}),sm=new THREE.MeshPhongMaterial({color:0xf2d99a,flatShading:true,shininess:0}),rk=new THREE.MeshPhongMaterial({color:0x9a8f86,flatShading:true,shininess:0});
-    for(let n=0;n<26;n++){const x=cx-750+rnd()*1500,z=cz-750+rnd()*1500,r=50+rnd()*110,tall=rnd()<0.3,near=nearest(x,z);
-      let h=tall?60+rnd()*90:r*0.3;if(near[1]<r+30)h=Math.min(h,S[near[0]].y-34);if(h<6)continue;
-      const b=new THREE.Mesh(new THREE.ConeGeometry(r,10,10),sm);b.position.set(x,3,z);world.add(b);
-      const m=new THREE.Mesh(new THREE.ConeGeometry(r*0.8,h,8),tall?rk:gm);m.position.set(x,h/2+2,z);world.add(m);}
-    const gold=new THREE.MeshBasicMaterial({color:0xffc928}),hot=new THREE.MeshBasicMaterial({color:0xff7a1a}),rg=new THREE.TorusGeometry(9,0.7,8,24);
-    for(let k=1;k<N/16;k++){const i=k*16,boost=k%4===0,m=new THREE.Mesh(rg,boost?hot:gold);m.position.copy(S[i]);m.lookAt(S[i].x+T[i].x,S[i].y+T[i].y,S[i].z+T[i].z);world.add(m);RINGS.push({i:i,m:m,boost:boost,t:0});}
+    pilotIsland(cx,cz);
+    /* rings: glowing blue hoops (gold ones boost); the next one to fly through is bright and pulses */
+    const blue=new THREE.MeshBasicMaterial({color:0x3fd6ff,transparent:true,opacity:0.85,fog:false}),gold=new THREE.MeshBasicMaterial({color:0xffc928,transparent:true,opacity:0.9,fog:false}),
+      rim=new THREE.MeshBasicMaterial({color:0xffffff,fog:false}),rg=new THREE.TorusGeometry(12,1.1,10,32),rr=new THREE.TorusGeometry(12,0.35,6,32);
+    for(let k=1;k<N/16;k++){const i=k*16,boost=k%4===0,m=new THREE.Group();m.add(new THREE.Mesh(rg,boost?gold:blue));const w=new THREE.Mesh(rr,rim);w.position.z=0.5;m.add(w);
+      m.position.copy(S[i]);m.lookAt(S[i].x+T[i].x,S[i].y+T[i].y,S[i].z+T[i].z);world.add(m);RINGS.push({i:i,m:m,boost:boost,t:0});}
     const sr=new THREE.Mesh(new THREE.TorusGeometry(15,1.6,8,28),new THREE.MeshBasicMaterial({map:checker}));checker.wrapS=THREE.RepeatWrapping;sr.position.copy(S[0]);sr.lookAt(S[0].x+T[0].x,S[0].y+T[0].y,S[0].z+T[0].z);world.add(sr);
-    clouds(46,0,0,true);
+    clouds(22,0,0,true);
     for(let k=0;k<5;k++){const s=S[Math.floor(rnd()*N)],g=new THREE.Group();g.position.set(s.x+(rnd()<0.5?-1:1)*(60+rnd()*60),s.y-10+rnd()*30,s.z+(rnd()-0.5)*120);
       const b=new THREE.Mesh(new THREE.SphereGeometry(9,12,10),lam([0xff4d6d,0xffc928,0x6c4bd8,0x2fd08a,0xff5fa2][k]));b.scale.y=1.15;g.add(b);
       const bk=new THREE.Mesh(new THREE.BoxGeometry(3,2.4,3),lam(0x9a6b3c));bk.position.y=-13;g.add(bk);world.add(g);balloons.push({g:g,p:rnd()*6,y:g.position.y});}
@@ -423,6 +521,9 @@ function resetRace(){
     place(k);
   });
   RINGS.forEach(r=>{r.t=0;r.m.scale.setScalar(1);});ringNext=0;
+  power=0;buoyNext=0;karts.forEach(k=>{k.air=false;k.airY=0;k.avy=0;k.spin=0;k.lastRamp=null;k.aiRamp=null;if(k.tilt)k.tilt.rotation.y=0;});
+  if(BUOYS.length){let b=0;while(b<BUOYS.length&&BUOYS[b].i<player.idx+2)b++;buoyNext=b%BUOYS.length;}
+  if(typeof powerHud==='function')powerHud();
   finishCount=0;raceT=0;lapStart=0;lapTimes=[];camSnap=true;
 }
 
@@ -499,7 +600,8 @@ function updAI(k,dt){
   k.off=k.offBase+Math.sin(time*0.4+k.phase)*3;
   const nx=NR[i].x+(NR[j].x-NR[i].x)*f,nz=NR[i].z+(NR[j].z-NR[i].z)*f;
   k.x=S[i].x+(S[j].x-S[i].x)*f+nx*k.off;k.z=S[i].z+(S[j].z-S[i].z)*f+nz*k.off;
-  k.y=S[i].y+(S[j].y-S[i].y)*f+(ev.veh==='plane'?k.voff+Math.sin(time*0.6+k.phase)*2:ev.veh==='ski'?wave(k.x,k.z,time)*0.4:0);
+  if(ev.veh==='ski')aiJump(k,dt);
+  k.y=S[i].y+(S[j].y-S[i].y)*f+(ev.veh==='plane'?k.voff+Math.sin(time*0.6+k.phase)*2:ev.veh==='ski'?sea(k.x,k.z,time)+(k.airY||0):0);
   const nh=Math.atan2(T[i].x+(T[j].x-T[i].x)*f,T[i].z+(T[j].z-T[i].z)*f);
   let dh=nh-k.h;while(dh>Math.PI)dh-=2*Math.PI;while(dh<-Math.PI)dh+=2*Math.PI;
   k.steer=Math.max(-1,Math.min(1,dh*12));k.h=nh;k.idx=i;
@@ -556,46 +658,100 @@ function updSki(k,dt){
   if(k.boost>0)k.boost-=dt;
   const i=k.idx,d0=Math.hypot(k.x-S[i].x,k.z-S[i].z),off=d0>W;
   let sp=Math.hypot(k.vx,k.vz);
-  k.h+=k.steer*2.1*dt*Math.max(0.35,Math.min(1,sp/18));
+  /* in the air left/right spins the ski instead of turning it */
+  if(!k.air)k.h+=k.steer*2.1*dt*Math.max(0.35,Math.min(1,sp/18));
   const fx=Math.sin(k.h),fz=Math.cos(k.h);
-  if(gas){const a=k.boost>0?85:34;k.vx+=fx*a*dt;k.vz+=fz*a*dt;}
+  if(gas&&!k.air){const a=k.boost>0?85:34;k.vx+=fx*a*dt;k.vz+=fz*a*dt;}
   if(brake){k.vx*=1-2.6*dt;k.vz*=1-2.6*dt;}
   k.vx*=1-0.3*dt;k.vz*=1-0.3*dt;
   const fc=k.vx*fx+k.vz*fz,lx=k.vx-fx*fc,lz=k.vz-fz*fc,grip=Math.min(1,3.0*dt);
   k.vx-=lx*grip;k.vz-=lz*grip;
-  const max=off?(k.boost>0?42:28):(k.boost>0?84:59);sp=Math.hypot(k.vx,k.vz);
+  const max=(off?(k.boost>0?42:28):(k.boost>0?84:59))+(k.isPlayer&&ev.buoys?power*3:0);sp=Math.hypot(k.vx,k.vz);
   if(sp>max){const s=Math.max(max,sp-(off?80:40)*dt)/sp;k.vx*=s;k.vz*=s;}
   k.speed=fc;k.x+=k.vx*dt;k.z+=k.vz*dt;
-  bumpRivals(k);
+  if(!k.air)bumpRivals(k);
   const d=track(k,false),bi=k.idx,lim=W*2.3;
   if(d>lim){k.x=S[bi].x+(k.x-S[bi].x)*lim/d;k.z=S[bi].z+(k.z-S[bi].z)*lim/d;k.vx*=0.9;k.vz*=0.9;}
   const lat=(k.x-S[bi].x)*NR[bi].x+(k.z-S[bi].z)*NR[bi].z;
-  k.y=wave(k.x,k.z,time)*0.4;
-  k.pv+=((0.03+Math.min(1,sp/60)*0.07+(wave(k.x+fx*2,k.z+fz*2,time)-wave(k.x-fx*2,k.z-fz*2,time))*0.06)-k.pv)*Math.min(1,dt*6);
+  const wy=sea(k.x,k.z,time);
+  if(k.air){
+    /* in the air: fall, and spin while left or right is held */
+    k.vy-=24*dt;k.y+=k.vy*dt;k.spin+=steer*9.5*dt;k.tilt.rotation.y=k.spin;k.pv+=((Math.max(-0.35,Math.min(0.45,k.vy*0.035)))-k.pv)*Math.min(1,dt*5);
+    if(k.y<=wy){k.air=false;k.y=wy;land(k);}
+  }else{
+    k.y=wy;
+    k.pv+=((0.03+Math.min(1,sp/60)*0.07+(sea(k.x+fx*2,k.z+fz*2,time)-sea(k.x-fx*2,k.z-fz*2,time))*0.15)-k.pv)*Math.min(1,dt*6);
+    /* a big swell crest can throw you a little */
+    if(ev.swell&&sp>40){const up=(sea(k.x+fx*3,k.z+fz*3,time)-wy)/3;if(up<-0.42&&k.vyS>0.3){k.air=true;k.vy=Math.min(7,k.vyS*1.5);k.spin=0;}}
+    k.vyS=(wy-(k.wyPrev||wy))/Math.max(dt,1e-3);k.wyPrev=wy;
+    rampCheck(k,lat,sp);
+  }
   k.roll=-k.steer*0.38*Math.min(1,sp/30);
-  if(sp>16)spray(k,sp,dt);
+  if(sp>16&&!k.air)spray(k,sp,dt);
+  if(ev.buoys&&k.isPlayer)buoyCheck(k,lat);
   padCheck(k,lat);wrongWay(k);
 }
 function updPlane(k,dt){
-  const steer=(input.left?1:0)-(input.right?1:0),pin=(input.up?1:0)-(input.down?1:0);
-  k.steer+=(steer-k.steer)*Math.min(1,dt*6);
-  k.pitch+=(pin*0.5-k.pitch)*Math.min(1,dt*3.2);
+  let steer=(input.left?1:0)-(input.right?1:0),pin=(input.up?1:0)-(input.down?1:0);
+  /* flying help: with no input, the plane turns and climbs toward the course a little ahead, so you only fine-tune for rings */
+  {const a=S[(k.idx+14)%N],dx=a.x-k.x,dz=a.z-k.z;let dh=Math.atan2(dx,dz)-k.h;dh=Math.atan2(Math.sin(dh),Math.cos(dh));
+   if(!steer)steer=Math.max(-0.8,Math.min(0.8,dh*1.6));
+   if(!pin){const want=Math.max(-0.4,Math.min(0.4,(a.y-k.y)*0.012));k.pitch+=(want-k.pitch)*Math.min(1,dt*2.4);}}
+  k.steer+=(steer-k.steer)*Math.min(1,dt*4);
+  if(pin)k.pitch+=(pin*0.45-k.pitch)*Math.min(1,dt*2.6);
   if(k.boost>0)k.boost-=dt;
   const i=k.idx,d0=Math.hypot(k.x-S[i].x,k.y-S[i].y,k.z-S[i].z),off=d0>W;
-  let target=k.boost>0?106:(input.brake?44:75);if(off)target=Math.min(target,50);
+  let target=k.boost>0?100:(input.brake?44:70);if(off)target=Math.min(target,58);
   k.speed+=Math.max(-45*dt,Math.min(32*dt,target-k.speed));
   k.h+=k.steer*1.45*dt;
   const cp=Math.cos(k.pitch);
   k.x+=Math.sin(k.h)*cp*k.speed*dt;k.z+=Math.cos(k.h)*cp*k.speed*dt;k.y+=Math.sin(k.pitch)*k.speed*dt;
-  if(off){const pull=Math.min(1,(d0-W)*0.05*dt*8);k.x+=(S[i].x-k.x)*pull;k.y+=(S[i].y-k.y)*pull;k.z+=(S[i].z-k.z)*pull;if(toastT<0.2)toast('Back to the rings!');}
+  if(off){const pull=Math.min(1,(d0-W)*0.05*dt*10);k.x+=(S[i].x-k.x)*pull;k.y+=(S[i].y-k.y)*pull;k.z+=(S[i].z-k.z)*pull;if(toastT<0.2&&d0>W+15)toast('Back to the rings!');}
   if(k.y<5){k.y=5;k.pitch=Math.max(k.pitch,0.15);k.speed*=0.97;}
   bumpRivals(k);track(k,true);
   k.pv=k.pitch;k.roll=-k.steer*0.75;
   if(RINGS.length){const r=RINGS[ringNext];let dd=k.idx-r.i;if(dd<-N/2)dd+=N;if(dd>N/2)dd-=N;
-    if(dd>=0){if(dd<14&&Math.hypot(k.x-S[r.i].x,k.y-S[r.i].y,k.z-S[r.i].z)<13){r.t=0.5;if(r.boost){k.boost=1.5;toast('Boost ring!');SFX.burst(300,3200,0.6,0.22,{game:true});beep(300,0.45,'sawtooth',0.06,1200);}else{beep(990,0.1,'triangle',0.08);SFX.play('coin',{game:true});}}
+    if(dd>=0){if(dd<14&&Math.hypot(k.x-S[r.i].x,k.y-S[r.i].y,k.z-S[r.i].z)<17){r.t=0.5;if(r.boost){k.boost=1.5;toast('Boost ring!');SFX.burst(300,3200,0.6,0.22,{game:true});beep(300,0.45,'sawtooth',0.06,1200);}else{beep(990,0.1,'triangle',0.08);SFX.play('coin',{game:true});}}
       ringNext=(ringNext+1)%RINGS.length;}}
   wrongWay(k);
 }
+/* ---------- ramps and airtime ---------- */
+let RAMPS=[],BUOYS=[],power=0,buoyNext=0;
+function rampCheck(k,lat,sp){
+  for(const r of RAMPS){let dd=k.idx-r.i;if(dd<-N/2)dd+=N;if(dd>N/2)dd-=N;
+    if(dd>=-1&&dd<=1&&Math.abs(lat-r.lat)<5&&sp>18&&!k.air&&k.lastRamp!==r){
+      k.lastRamp=r;k.air=true;k.vy=8+sp*0.16;k.spin=0;k.tilt.rotation.y=0;
+      if(k.isPlayer){SFX.burst(400,2200,0.35,0.16,{game:true});beep(500,0.12,'triangle',0.06,900);}
+      return;}}
+  if(k.lastRamp&&Math.abs(k.idx-k.lastRamp.i)>6)k.lastRamp=null;
+}
+function land(k){
+  const turns=Math.abs(k.spin)/(Math.PI*2),near=Math.abs(turns-Math.round(turns));
+  const fx=Math.sin(k.h),fz=Math.cos(k.h);
+  for(let q=0;q<14;q++){const a=Math.random()*6.283;fxP.emit(k.x+Math.cos(a)*1.2,k.y+0.3,k.z+Math.sin(a)*1.2,Math.cos(a)*(2+Math.random()*3),2+Math.random()*4,Math.sin(a)*(2+Math.random()*3),0.7,1.1,0xffffff,12,1.8,0.75);}
+  if(k.isPlayer){
+    if(turns>=0.8&&near<0.14){const n=Math.round(turns);k.boost=1.2+0.4*n;toast(n>1?n+'x spin! Boost!':'Spin! Boost!');SFX.play('tile_match',{game:true});SFX.burst(300,3200,0.6,0.22,{game:true});}
+    else if(turns>0.2&&near>0.25){k.vx*=0.45;k.vz*=0.45;toast('Wipeout!');SFX.play('impact',{game:true,vol:0.6});}
+    else SFX.play('land',{game:true,vol:0.9});
+  }
+  k.spin=0;k.tilt.rotation.y=0;
+}
+/* rivals jump the ramps they ride over too (a simple arc on top of their path) */
+function aiJump(k,dt){
+  if(k.airY>0||k.avy>0){k.avy-=24*dt;k.airY=Math.max(0,(k.airY||0)+k.avy*dt);if(k.airY===0){k.avy=0;k.tilt.rotation.y=0;}else k.tilt.rotation.y+=k.spinA*dt;return;}
+  for(const r of RAMPS){let dd=Math.floor(k.t)-r.i;if(dd<-N/2)dd+=N;if(dd>N/2)dd-=N;
+    if(dd===0&&Math.abs(k.off-r.lat)<5&&k.aiRamp!==r){k.aiRamp=r;k.avy=8+k.speed*0.16;k.airY=0.01;k.spinA=Math.random()<0.4?(Math.random()<0.5?-1:1)*6.283/1.05:0;return;}}
+  if(k.aiRamp&&Math.abs(Math.floor(k.t)-k.aiRamp.i)>6)k.aiRamp=null;
+}
+/* Wave Race buoys: red on your right side, yellow on your left. Each one passed right adds power (more top speed); a miss resets it */
+function buoyCheck(k,lat){
+  if(!BUOYS.length)return;const b=BUOYS[buoyNext];let dd=k.idx-b.i;if(dd<-N/2)dd+=N;if(dd>N/2)dd-=N;
+  if(dd>=0){const ok=b.red?lat>b.lat:lat<b.lat;
+    if(ok){power=Math.min(5,power+1);beep(660+power*80,0.1,'triangle',0.07);if(power===5)toast('Max power!');}
+    else{if(power>0||toastT<0.2)toast('Missed buoy!');power=0;beep(200,0.2,'sawtooth',0.05,120);}
+    b.flash=0.6;b.ok=ok;buoyNext=(buoyNext+1)%BUOYS.length;powerHud();}
+}
+function powerHud(){const el=$('power');el.hidden=!(ev.buoys&&state!=='menu');el.innerHTML='POWER <b>'+'●'.repeat(power)+'<i>'+'●'.repeat(5-power)+'</i></b>';}
 /* spray behind the player's jet ski */
 const drops=[];let dropI=0;
 {const dm=new THREE.MeshBasicMaterial({color:0xffffff});for(let i=0;i<26;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.2,6,5),dm);m.visible=false;scene.add(m);drops.push({m:m,t:0,vx:0,vy:0,vz:0});}}
@@ -643,15 +799,29 @@ function frame(now){
   const upd=ev.veh==='ski'?updSki:ev.veh==='plane'?updPlane:updKart;
   if(state==='race'||state==='done')karts.forEach(k=>k.ai?updAI(k,dt):upd(k,dt));
   karts.forEach(k=>{
-    if(ev.veh==='ski'&&state!=='race'&&state!=='done')k.y=wave(k.x,k.z,time)*0.4;
+    if(ev.veh==='ski'&&state!=='race'&&state!=='done')k.y=sea(k.x,k.z,time);
     place(k);k.pivots.forEach(p=>p.rotation.y=k.steer*0.45);
     if(k.prop)k.prop.rotation.z+=dt*(18+Math.abs(k.speed)*0.5);
     k.tilt.position.y=ev.veh==='kart'&&Math.abs(k.speed)>2?Math.sin(time*30+k.phase)*0.03:0;
   });
-  balloons.forEach(b=>b.g.position.y=b.y+Math.sin(time*1.4+b.p)*0.8);
+  balloons.forEach(b=>{if(!b.dolphin){b.g.position.y=b.y+Math.sin(time*1.4+b.p)*0.8;return;}
+    const c=((time*0.35+b.p)%3)/3,u=Math.min(1,c*2.2),air=u<1?Math.sin(u*Math.PI):0;b.g.visible=u<1;
+    b.g.position.set(b.x0+Math.sin(b.h)*(u-0.5)*16,-1.4+air*5,b.z0+Math.cos(b.h)*(u-0.5)*16);b.g.rotation.x=-Math.cos(u*Math.PI)*0.9;});
+  BUOYS.forEach(b=>{b.g.position.y=sea(b.g.position.x,b.g.position.z,time)*0.8-0.3;if(b.flash>0){b.flash-=dt;b.g.scale.setScalar(1+b.flash*0.6);}});
+  RAMPS.forEach(r=>{r.g.position.y=ev.swell?sea(r.g.position.x,r.g.position.z,time)*0.6:0;});
+  if(swellMesh){const c=state==='menu'?S[N-16]:player,G=swellMesh.geometry,pa=G.attributes.position,co=G.attributes.color,st=SWELL_W/90,o=swellMesh.userData.c,
+      gx=o[0]+Math.round((c.x-o[0])/st)*st,gz=o[1]+Math.round((c.z-o[1])/st)*st,half=SWELL_W/2,Y=swellMesh.userData.y||(swellMesh.userData.y=new Float32Array(91*91));
+    swellMesh.position.set(gx,0,gz);
+    for(let q=0;q<pa.count;q++){const x=pa.getX(q),z=pa.getZ(q),e=Math.min(half-Math.abs(x),half-Math.abs(z)),f=Math.min(1,Math.max(0,e/70));
+      Y[q]=-0.6+(sea(gx+x,gz+z,time)+0.45)*f*f*(3-2*f);pa.setY(q,Y[q]);}
+    /* lighter on slopes facing the sun (low in the south west), darker on the backs of swells */
+    for(let r=0;r<91;r++)for(let q=0;q<91;q++){const i=r*91+q,dx=(Y[r*91+Math.min(90,q+1)]-Y[r*91+Math.max(0,q-1)])/(2*st),dz=(Y[Math.min(90,r+1)*91+q]-Y[Math.max(0,r-1)*91+q])/(2*st);
+      const b=Math.max(0.7,Math.min(1.35,1+(dx*0.81+dz*0.59)*4));co.setXYZ(i,b,b,b);}
+    pa.needsUpdate=true;co.needsUpdate=true;const m=swellMesh.material.map;m.offset.set((gx-o[0])/41.667+time*0.004,-(gz-o[1])/41.667+time*0.007);}
   padMat.color.setScalar(0.85+0.15*Math.sin(time*8));
   if(waterTex){waterTex.offset.x=time*0.004;waterTex.offset.y=time*0.007;}
-  RINGS.forEach(r=>{if(r.t>0)r.t-=dt;r.m.scale.setScalar(1+Math.max(0,r.t)*1.2);});
+  RINGS.forEach((r,n)=>{if(r.t>0)r.t-=dt;const next=n===ringNext&&state==='race';r.m.scale.setScalar(1+Math.max(0,r.t)*1.2+(next?Math.sin(time*6)*0.08+0.08:0));
+    r.m.children[0].material.opacity=next||r.boost?0.95:0.55;});
   drops.forEach(d=>{if(d.t<=0)return;d.t-=dt;d.vy-=18*dt;d.m.position.x+=d.vx*dt;d.m.position.y+=d.vy*dt;d.m.position.z+=d.vz*dt;if(d.t<=0||d.m.position.y<0)d.m.visible=false,d.t=0;});
 
   fxShadows();if(state==='race'||state==='done')fxKarts(dt);
@@ -682,8 +852,8 @@ function frame(now){
    if(!sfxEng&&SFX.ready){sfxEng=SFX.loop('engine',{game:true,vol:0});sfxSkid=SFX.loop('skid',{game:true,vol:0});}
    if(sfxEng){sfxEng.vol(run?0.3+Math.min(0.25,sp/300):0);sfxEng.rate((plane?0.9:ev.veh==='ski'?0.75:0.6)+sp/(plane?90:60));
     sfxSkid.vol(run&&ev.veh==='kart'&&sp>24&&Math.abs(p.steer)>0.6?Math.min(0.6,(sp-24)/40):0);}}
-  {const q=state==='menu'?S[N-16]:p;sun.target.position.set(q.x,q.y,q.z);sun.position.set(q.x+60,q.y+120,q.z+40);
-   sunGlow.position.set(camera.position.x+600,camera.position.y+1200,camera.position.z+400);sunHalo.position.copy(sunGlow.position);
+  {const q=state==='menu'?S[N-16]:p,low=ev.id==='sunset';sun.target.position.set(q.x,q.y,q.z);sun.position.set(q.x+(low?-110:60),q.y+(low?38:120),q.z+(low?-80:40));
+   if(low)sunGlow.position.set(camera.position.x-1100,camera.position.y+130,camera.position.z-800);else sunGlow.position.set(camera.position.x+600,camera.position.y+1200,camera.position.z+400);sunHalo.position.copy(sunGlow.position);
    fxP.tick(dt,camera,renderer.domElement.height);fxA.tick(dt,camera,renderer.domElement.height);}
   renderer.render(scene,camera);
   requestAnimationFrame(frame);
@@ -694,7 +864,7 @@ function startRace(){
   initAudio();resetRace();
   $('menu').hidden=true;$('results').hidden=true;$('hud').hidden=false;
   const plane=ev.veh==='plane';$('tu').hidden=!plane;$('td').hidden=!plane;$('tb').hidden=plane;
-  $('toast').textContent='';state='count';cd=3;cdShown=0;
+  $('toast').textContent='';state='count';cd=3;cdShown=0;powerHud();
 }
 function evButtons(){
   [].forEach.call($('evs').children,(b,i)=>{const e=EVENTS[i],r=best.ev[e.id];b.setAttribute('aria-pressed',e===ev);
