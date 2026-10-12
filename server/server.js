@@ -62,7 +62,7 @@ const cleanLook=a=>{a=a&&typeof a==='object'?a:{};return {species:num(a.species,
 const cleanStatus=s=>(typeof s==='string'&&/^[a-z:]{0,20}$/.test(s))?s:'';
 const send=(ws,o)=>{if(ws.readyState===1)ws.send(JSON.stringify(o));};
 const others=(c,o)=>{const r=rooms.get(c.room);if(r)for(const p of r)if(p!==c)send(p.ws,o);};
-const pub=c=>({id:c.id,name:c.name,av:c.av,x:c.x,z:c.z,h:c.h,s:c.s});
+const pub=c=>({id:c.id,name:c.name,av:c.av,x:c.x,z:c.z,h:c.h,s:c.s,l:c.l||0});
 
 const wss=new WebSocketServer({server,path:'/ws',maxPayload:2048,verifyClient:info=>hasPass(info.req)});
 wss.on('connection',ws=>{
@@ -83,7 +83,7 @@ wss.on('connection',ws=>{
       return;
     }
     if(!c.room)return;
-    if(m.t==='p'){c.x=num(m.x,-40,20,c.x);c.z=num(m.z,-20,20,c.z);c.h=num(m.h,-1e4,1e4,c.h);c.m=num(m.m,0,1,0);c.s=cleanStatus(m.s);}
+    if(m.t==='p'){c.x=num(m.x,-40,20,c.x);c.z=num(m.z,-20,20,c.z);c.h=num(m.h,-1e4,1e4,c.h);c.m=num(m.m,0,1,0);c.s=cleanStatus(m.s);c.l=m.l===1?1:0;}
     else if(m.t==='av'){c.name=cleanName(m.name);c.av=cleanLook(m.av);others(c,{t:'av',id:c.id,name:c.name,av:c.av});}
     else if(m.t==='e'){others(c,{t:'e',id:c.id,k:num(m.k,0,3,0)|0});}
   });
@@ -99,7 +99,7 @@ const r2=v=>Math.round(v*100)/100;
 setInterval(()=>{
   for(const r of rooms.values()){
     if(r.size<2)continue;
-    const msg=JSON.stringify({t:'s',p:[...r].map(c=>[c.id,r2(c.x),r2(c.z),r2(c.h),r2(c.m),c.s])});
+    const msg=JSON.stringify({t:'s',p:[...r].map(c=>[c.id,r2(c.x),r2(c.z),r2(c.h),r2(c.m),c.s,c.l||0])});
     for(const c of r)if(c.ws.readyState===1)c.ws.send(msg);
   }
 },TICK_MS);
