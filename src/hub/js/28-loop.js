@@ -30,9 +30,12 @@ function frame(now){
     fwd=(keys.up?1:0)-(keys.down?1:0)-jy;turn=(keys.left?1:0)-(keys.right?1:0)-jx;
     fwd=Math.max(-1,Math.min(1,fwd));turn=Math.max(-1,Math.min(1,turn));
     if(Math.abs(fwd)<0.15)fwd=0;if(Math.abs(turn)<0.15)turn=0;
+    /* with the mouse taken, left and right step sideways instead of turning */
+    let side=0;if(looking){side=turn;turn=0;}
     P.h+=turn*2.5*dt;const sp=fwd>0?3.3:1.8;
-    P.x+=Math.sin(P.h)*fwd*sp*dt;P.z+=Math.cos(P.h)*fwd*sp*dt;collide();
-  }
+    P.x+=(Math.sin(P.h)*fwd*sp+Math.cos(P.h)*side*2.6)*dt;P.z+=(Math.cos(P.h)*fwd*sp-Math.sin(P.h)*side*2.6)*dt;collide();
+    if(side&&!fwd)fwd=0.0001;
+  }else if(looking)unlook();
   P.move+=((fwd?1:0)-P.move)*Math.min(1,dt*10);P.phase+=dt*9*(fwd<0?-0.7:1);
   const a=avatar,sitting=mode==='sit';
   sitY+=((sitting?sitLift(a):0)-sitY)*Math.min(1,dt*10);
@@ -44,7 +47,8 @@ function frame(now){
   const fx=Math.sin(P.h),fz=Math.cos(P.h);
   if(mode==='custom'){camT.set(P.x+fx*2.5+fz*0.5,1.35,P.z+fz*2.5-fx*0.5);lookT.set(P.x,0.95,P.z);}
   else if(sitting){camT.set(-5.05,1.95,2.0);lookT.set(-11,1.25,2);}
-  else{camT.set(P.x-fx*3.5,2.05,P.z-fz*3.5);lookT.set(P.x+fx*0.8,1.05,P.z+fz*0.8);}
+  else{/* orbit behind you; the mouse tilts it up and down */
+    const cp=Math.cos(camPitch),spch=Math.sin(camPitch);camT.set(P.x-fx*3.5*cp,1.25+3.5*spch,P.z-fz*3.5*cp);lookT.set(P.x+fx*0.8,1.25-0.85*spch+0.2*cp-0.2,P.z+fz*0.8);}
   if(P.x>-10.9||mode!=='walk'){camT.x=Math.max(-RX+0.35,Math.min(RX-0.35,camT.x));camT.z=Math.max(-RZ+0.35,Math.min(RZ-0.35,camT.z));}
   else{camT.x=Math.max(-30.5,Math.min(-10.4,camT.x));
     if(camT.x>CAVE.x+CAVE.r-0.2)camT.z=Math.max(SZ0+0.3,Math.min(SZ1-0.3,camT.z));else{const dx=camT.x-CAVE.x,dz=camT.z-CAVE.z,d=Math.hypot(dx,dz);if(d>CAVE.r+0.3){camT.x=CAVE.x+dx/d*(CAVE.r+0.3);camT.z=CAVE.z+dz/d*(CAVE.r+0.3);}}

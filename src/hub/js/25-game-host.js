@@ -1,7 +1,7 @@
 /* ---------- running a game inside the basement ---------- */
 let game=null;
 function openGame(i){
-  if(game)return;
+  if(game)return;unlook();
   const m=META[i],root=document.createElement('div');root.className='h-gameroot';
   root.appendChild($('tpl-'+m.id).content.cloneNode(true));
   const leave=document.createElement('button');leave.type='button';leave.className='h-leave';leave.textContent='Leave game (Esc)';root.appendChild(leave);
