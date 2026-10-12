@@ -66,6 +66,14 @@ body{background:var(--ink);color:var(--cream);font-family:var(--body);font-weigh
 .pick button{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:8px;padding:8px 4px;font:700 16px var(--body);color:var(--cream);cursor:pointer;display:flex;flex-direction:column;gap:2px}
 .pick button small{font-size:12px;opacity:.7}
 .pick button[aria-pressed="true"]{background:var(--aqua);color:var(--ink);border-color:var(--aqua)}
+.lo{display:flex;flex-direction:column;gap:8px}
+.lohead{display:flex;justify-content:space-between;font-size:13px;letter-spacing:.12em;opacity:.85}
+.pick.lo3{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+.lo button{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.lo button.locked{opacity:.7;border-style:dashed}.lo button.armed{opacity:1;border-color:var(--lime);border-style:solid}
+#scope{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 50%,transparent 0,transparent 33vmin,rgba(0,10,20,.96) calc(33vmin + 2px))}
+#scope::before,#scope::after{content:"";position:absolute;left:50%;top:50%;background:rgba(0,0,0,.8)}
+#scope::before{width:66vmin;height:2px;transform:translate(-50%,-50%)}#scope::after{width:2px;height:66vmin;transform:translate(-50%,-50%)}
 .keys{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;text-align:left;font-size:15px;margin:0}
 .keys dt{color:var(--aqua);white-space:nowrap}.keys dd{margin:0}
 .go{font:400 22px var(--display);color:var(--ink);background:var(--lime);border:0;border-radius:8px;padding:11px 18px;cursor:pointer;letter-spacing:.04em}
@@ -95,6 +103,7 @@ button:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
     <div id="hit"></div>
     <div id="msg"></div><div id="sub"></div>
     <div id="health" class="pn"><span id="hlabel">DRY</span><div id="hbar"><div id="hfill"></div></div></div>
+    <div id="scope" hidden></div>
     <div id="ammo" class="pn"><div id="wname">SOAKER AR</div><div id="acount">30<small> / 30</small></div><div id="bal">BALLOONS ● ●</div></div>
     <div id="dead" hidden><b>SOAKED</b><span id="deadby"></span></div>
     <div id="touch">
@@ -102,6 +111,7 @@ button:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
       <div id="tbtn">
         <button id="tads" type="button">Aim</button><button id="tswap" type="button">Swap</button>
         <button id="trel" type="button">Refill</button><button id="tbal" type="button">Balloon</button>
+        <button id="tjump" type="button">Jump</button><button id="tcrouch" type="button">Crouch</button>
         <button id="tauto" type="button" class="on">Auto-fire: on</button>
         <button id="tfire" type="button">FIRE</button>
       </div>
@@ -116,11 +126,16 @@ button:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
       <div class="pick two" id="modes"></div>
       <div class="pick two" id="maps"></div>
       <div class="pick" id="diff"></div>
+      <div class="lo"><div class="lohead"><span>LOADOUT</span><span id="locoins"></span></div>
+        <div class="pick lo3" id="lop" aria-label="Primary water gun"></div>
+        <div class="pick two" id="los" aria-label="Sidearm"></div></div>
       <button class="go" id="start" type="button">DEPLOY</button>
       <dl class="keys hint-keys">
         <dt>W A S D · Shift</dt><dd>Move · sprint</dd>
         <dt>Mouse · Left · Right</dt><dd>Look · spray · aim down the sights</dd>
-        <dt>1 · 2 · Q</dt><dd>Soaker AR · Squirt-9 pistol · swap</dd>
+        <dt>Space · C or Ctrl</dt><dd>Jump · crouch</dd>
+        <dt>Q · E</dt><dd>Peek left · peek right</dd>
+        <dt>1 · 2 · X · wheel</dt><dd>Primary · sidearm · swap</dd>
         <dt>R · G</dt><dd>Refill the tank · throw a water balloon</dd>
       </dl>
       <p class="hint-touch">Left stick moves. Drag anywhere to look, including on the FIRE button while you hold it. With auto-fire on, the gun sprays by itself when your sights are on a rival.</p>
@@ -165,10 +180,23 @@ const CAST=[
 const hex=n=>'#'+n.toString(16).padStart(6,'0');
 const TARGET=20,MATCH=300,MX=26,MZ=18,EYE=1.6;
 const DIFFS=[{n:'Recruit',d:'Easy',acc:0.2,react:0.65},{n:'Regular',d:'Normal',acc:0.32,react:0.42},{n:'Veteran',d:'Hard',acc:0.46,react:0.26}];
-const WEAPONS=[
-  {name:'SOAKER AR',mag:30,dmg:21,rate:0.105,auto:true,spread:0.022,ads:0.007,kick:0.011,reload:1.7,fov:40,range:46},
-  {name:'SQUIRT-9',mag:12,dmg:35,rate:0.17,auto:false,spread:0.008,ads:0.002,kick:0.018,reload:1.25,fov:48,range:36}
+/* every water gun. slot 0 = primary, 1 = sidearm. price 0 = free; the rest are bought with basement coins on the loadout screen.
+   pellets: shots per trigger pull (the Drencher); move: walking speed multiplier; scope: shows a scope when aiming. */
+const ARMORY=[
+  {id:'ar',slot:0,name:'SOAKER AR',d:'All-rounder',mag:30,dmg:21,rate:0.105,auto:true,spread:0.022,ads:0.007,kick:0.011,reload:1.7,fov:40,range:46,snd:'ar',file:'AK',c:[0x3fc4ff,0xffc928],price:0},
+  {id:'smg',slot:0,name:'BUBBLE SMG',d:'Fast, short range',mag:40,dmg:14,rate:0.07,auto:true,spread:0.032,ads:0.013,kick:0.007,reload:1.5,fov:50,range:32,snd:'ar',file:'SMG',c:[0x7cff5a,0xff4d6d],price:250,move:1.08},
+  {id:'shotgun',slot:0,name:'DRENCHER',d:'Huge splash up close',mag:6,dmg:12,pellets:8,rate:0.8,auto:false,spread:0.075,ads:0.055,kick:0.05,reload:2.2,fov:56,range:18,snd:'shotgun',file:'Shotgun',c:[0xff7a1a,0x2f6fd8],price:350},
+  {id:'hose',slot:0,name:'FIRE HOSE',d:'Giant tank, slow to carry',mag:90,dmg:15,rate:0.085,auto:true,spread:0.034,ads:0.016,kick:0.008,reload:3.2,fov:46,range:40,snd:'ar',file:'ShortCannon',c:[0xff3b3b,0xffe14a],price:450,move:0.86},
+  {id:'sniper',slot:0,name:'HYDRO LANCE',d:'Scoped, long range',mag:5,dmg:70,rate:1.05,auto:false,spread:0.05,ads:0.0006,kick:0.07,reload:2.4,fov:20,range:80,snd:'sniper',file:'Sniper',c:[0x9b6bff,0x2fe0c0],price:500,scope:true},
+  {id:'pistol',slot:1,name:'SQUIRT-9',d:'Quick sidearm',mag:12,dmg:35,rate:0.17,auto:false,spread:0.008,ads:0.002,kick:0.018,reload:1.25,fov:48,range:36,snd:'pistol',file:'Pistol',c:[0xffc928,0x3fc4ff],price:0},
+  {id:'revolver',slot:1,name:'SPLASH REVOLVER',d:'Six heavy shots',mag:6,dmg:55,rate:0.38,auto:false,spread:0.012,ads:0.002,kick:0.04,reload:1.9,fov:44,range:42,snd:'pistol',file:'Revolver',c:[0x2fe0c0,0xff5fa2],price:200}
 ];
+const ARM={};ARMORY.forEach(g=>ARM[g.id]=g);
+const api_=typeof api!=='undefined'&&api?api:null;
+const gunOwned=g=>!g.price||!api_||!api_.owns||api_.owns('gun-'+g.id);
+let loadout=['ar','pistol'];
+try{const l=JSON.parse(localStorage.getItem('mwf-loadout'));if(l&&ARM[l[0]]&&ARM[l[1]]&&gunOwned(ARM[l[0]])&&gunOwned(ARM[l[1]]))loadout=l;}catch(e){}
+const GUN=slot=>ARM[loadout[slot]];
 const TEAMC=[0x2f6fe0,0xff7a1a],TEAMN=['Blue','Orange'],ENEMY=['Tango','Pickle','Noodle','Waffle'];
 const coarse=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -438,7 +466,7 @@ function spawn(s){
   pts.forEach(p=>{let m=1e9;soldiers.forEach(o=>{if(o.team!==s.team&&o.alive)m=Math.min(m,Math.hypot(o.x-p[0],o.z-p[1]));if(o!==s&&o.team===s.team&&o.alive&&Math.hypot(o.x-p[0],o.z-p[1])<1)m=0;});if(m>bd){bd=m;best=p;}});
   s.x=best[0];s.z=best[1];s.h=s.team?-Math.PI/2:Math.PI/2;s.hp=100;s.alive=true;s.protect=1.8;s.mag=30;s.balloons=s.isPlayer?2:1;s.path=[];s.target=null;s.hurtBy=null;
   if(s.cr){s.hideT=0;s.cr.g.visible=true;s.cr.g.position.set(s.x,0,s.z);if(s.cr.act)s.cr.act.state('Idle',0);}
-  if(s.isPlayer){yaw=s.team?Math.PI/2:-Math.PI/2;pitch=0;ammo[0]=WEAPONS[0].mag;ammo[1]=WEAPONS[1].mag;reloadT=0;$('dead').hidden=true;}
+  if(s.isPlayer){crouch=false;jumpY=0;jumpV=0;yaw=s.team?Math.PI/2:-Math.PI/2;pitch=0;ammo[0]=GUN(0).mag;ammo[1]=GUN(1).mag;reloadT=0;$('dead').hidden=true;}
 }
 
 /* ---------- effects ---------- */
@@ -472,10 +500,12 @@ function tone(a,b,dur,vol,type){try{const o=ac.createOscillator(),g=ac.createGai
 function snd(k,dist){
   if(!ac)return;const att=dist===undefined?1:clamp(1-dist/45,0.05,1),G={game:true};
   if(k==='ar')SFX.burst(2000,800,0.13,0.1*att,G);else if(k==='pistol')SFX.burst(2800,1100,0.11,0.12*att,G);
+  else if(k==='shotgun'){SFX.burst(1600,260,0.4,0.3*att,G);SFX.burst(500,120,0.3,0.2*att,{game:true,type:'lowpass'});}
+  else if(k==='sniper'){SFX.burst(4200,700,0.3,0.24*att,G);tone(900,180,0.25,0.07*att,'sawtooth');}
   else if(k==='burst'){SFX.play('break',{game:true,vol:att});SFX.burst(1000,180,0.55,0.3*att,{game:true,type:'lowpass'});}
   else if(k==='soak')SFX.play('tile_match',{game:true,vol:0.8});else if(k==='hurt')SFX.burst(800,250,0.2,0.18,{game:true,type:'lowpass'});
   else if(k==='pump')SFX.play('weapon',{game:true,delay:0.2});else if(k==='win')SFX.play('win',{game:true,delay:0.3});else if(k==='throw')SFX.burst(500,1400,0.18,0.08,G);
-  if(k==='ar')nz(2300,1.2,0.08,0.22*att);else if(k==='pistol'){nz(3000,2,0.07,0.25*att);tone(700,300,0.06,0.05*att);}
+  if(k==='ar'||k==='shotgun'||k==='sniper')nz(2300,1.2,0.08,0.22*att);else if(k==='pistol'){nz(3000,2,0.07,0.25*att);tone(700,300,0.06,0.05*att);}
   else if(k==='hit')tone(1100,600,0.07,0.09);else if(k==='hurt'){nz(500,1,0.12,0.25,'lowpass');}
   else if(k==='soak'){tone(660,990,0.12,0.1,'triangle');setTimeout(()=>tone(990,1320,0.16,0.1,'triangle'),90);}
   else if(k==='burst'){nz(700,0.7,0.35,0.5*att,'lowpass');tone(180,60,0.25,0.2*att);}
@@ -486,7 +516,10 @@ function snd(k,dist){
 
 /* ---------- match state ---------- */
 let state='menu',time=0,matchT=MATCH,score=[0,0],yaw=0,pitch=0,weapon=0,ammo=[30,12],reloadT=0,fireCool=0,firing=false,ads=false,adsK=0,recoil=0,kick=0,bob=0,streak=0,
-  hitT=0,msgT=0,deadT=0,locked=false,noLock=false,touchLook=null,mouseX=0,mouseY=0,sprint=false;
+  hitT=0,msgT=0,deadT=0,locked=false,noLock=false,touchLook=null,mouseX=0,mouseY=0,sprint=false,
+  crouch=false,crouchK=0,jumpY=0,jumpV=0,leanK=0,leanOff=0;
+/* where your eyes are: lower when crouched, higher mid-jump */
+const eyeY=()=>EYE-0.55*crouchK+jumpY;
 const keys={};let jx=0,jy=0;
 let best={};try{best=JSON.parse(localStorage.getItem('mwf-best'))||{};}catch(e){best={};}
 function msg(a,b){$('msg').textContent=a;$('sub').textContent=b||'';msgT=2.2;}
@@ -515,7 +548,7 @@ function waveTick(dt){
   if(breakT>0){breakT-=dt;if(breakT<=0)startWave();return;}
   if(toSpawn>0){spawnT-=dt;if(spawnT<=0&&alive<Math.min(12,4+wave)){const z=zs.find(s=>!s.alive);if(z){spawn(z);toSpawn--;spawnT=Math.max(0.5,1.7-wave*0.08);}}}
   else if(alive===0){breakT=6;msg('WAVE '+wave+' CLEAR','Tanks and balloons refilled');snd('win');
-    soldiers.forEach(s=>{if(s.team===0&&!s.alive)spawn(s);});P.balloons=2;P.hp=100;ammo[0]=WEAPONS[0].mag;ammo[1]=WEAPONS[1].mag;}
+    soldiers.forEach(s=>{if(s.team===0&&!s.alive)spawn(s);});P.balloons=2;P.hp=100;ammo[0]=GUN(0).mag;ammo[1]=GUN(1).mag;}
 }
 function zombieUpdate(b,dt){
   b.think-=dt;
@@ -553,15 +586,17 @@ function assist(dt){
   yaw+=Math.atan2(Math.sin(aimT.yaw-yaw),Math.cos(aimT.yaw-yaw))*k;pitch+=(aimT.pitch-pitch)*k;
   if(autoFire&&aimT.a<Math.max(0.04,0.55/aimT.d)&&reloadT<=0&&fireCool<=0&&aimT.s.protect<=0)shoot();
 }
-function aimPoint(s){return s.isPlayer?EYE-0.45:1.0;}
+function aimPoint(s){return s.isPlayer?eyeY()-0.45:1.0;}
 function canSee(a,b){
-  const ax=a.x,ay=a.isPlayer?EYE:1.55,az=a.z;
-  for(const ty of [b.isPlayer?EYE:1.5,b.isPlayer?1.05:0.95]){const dx=b.x-ax,dy=ty-ay,dz=b.z-az,d=Math.hypot(dx,dy,dz);if(rayWorld(ax,ay,az,dx/d,dy/d,dz/d,d)>=d-0.01)return true;}
+  const ax=a.isPlayer&&a.cx!==undefined?a.cx:a.x,ay=a.isPlayer?eyeY():1.55,az=a.isPlayer&&a.cz!==undefined?a.cz:a.z;
+  /* a player who leans out is seen at the head only; standing in the open, head or chest */
+  const bx=b.isPlayer&&b.cx!==undefined?b.cx:b.x,bz=b.isPlayer&&b.cz!==undefined?b.cz:b.z,pts=b.isPlayer?(Math.abs(leanOff)>0.2?[[bx,eyeY(),bz]]:[[bx,eyeY(),bz],[b.x,eyeY()*0.6,b.z]]):[[b.x,1.5,b.z],[b.x,0.95,b.z]];
+  for(const q of pts){const dx=q[0]-ax,dy=q[1]-ay,dz=q[2]-az,d=Math.hypot(dx,dy,dz);if(rayWorld(ax,ay,az,dx/d,dy/d,dz/d,d)>=d-0.01)return true;}
   return false;
 }
 
 /* ---------- player weapon ---------- */
-const vm=new THREE.Group();gunScene.add(vm);const guns=[],tanks=[],pumps=[];
+const vm=new THREE.Group();gunScene.add(vm);const guns=[],tanks=[],pumps=[];let VM_STAND=null;const VM={};
 {
   const pl=S(0x56683a,0.55),dk=S(0x1b1d21,0.55),or=S(0xff7a1a,0.5),gl=new THREE.MeshStandardMaterial({color:0xbfeaff,transparent:true,opacity:0.32,roughness:0.05}),wa=new THREE.MeshStandardMaterial({color:0x35b8ff,transparent:true,opacity:0.8,roughness:0.1});
   const fur=S(0xb5733c,0.9);
@@ -585,24 +620,69 @@ const vm=new THREE.Group();gunScene.add(vm);const guns=[],tanks=[],pumps=[];
   add(bx(0.01,0.02,0.01),dk,0,0.118,-0.14,p);add(bx(0.03,0.016,0.01),dk,0,0.115,0.05,p);
   add(new THREE.SphereGeometry(0.052,10,8),fur,0.004,-0.1,0.04,p);add(cz(0.04,0.05,0.3),fur,0.05,-0.2,0.18,p).rotation.x=-0.6;
   vm.userData.fur=fur;
+  /* how each stand-in moves its tank and pump */
+  r.userData={tank:tw,tankY:0.09,tankDrop:0.043,pump:pm,pumpZ:-0.3,adsY:0.036};
+  p.userData={tank:tw2,tankY:0.07,tankDrop:0.03,pump:pumps[1],pumpZ:0.09,adsY:0.055};
+  VM_STAND=[r,p];
 }
-function setWeapon(w){if(w===weapon||!P.alive)return;weapon=w;SFX.play('weapon',{game:true});reloadT=0;guns.forEach((g,i)=>g.visible=i===w);fireCool=0.25;kick=0.5;ads=false;}
-function reload(){const W=WEAPONS[weapon];if(reloadT>0||ammo[weapon]>=W.mag||!P.alive)return;reloadT=W.reload;ads=false;snd('pump');setTimeout(()=>{if(reloadT>0)snd('pump');},W.reload*500);}
+/* modelled guns (Toon Shooter kit) repainted as toys, a see-through water tank on top, held in paws */
+function gunVM(def){
+  if(VM[def.id])return VM[def.id];
+  const e=VM[def.id]={g:null};
+  if(typeof GFX==='undefined')return e;
+  GFX.model('waterfare/guns/'+def.file+'.glb',m=>{try{
+    const g=new THREE.Group(),side=def.slot===1,L=side?0.36:def.id==='sniper'?0.86:def.id==='shotgun'?0.74:0.64;
+    m.traverse(o=>{if(!o.isMesh)return;o.castShadow=false;const n=o.material.name;
+      const c=/^(Grey|LightGrey)$/.test(n)?def.c[0]:/^(Grey2|Wood|DarkWood)$/.test(n)?def.c[1]:/Black/.test(n)?0x1d1640:0xf4efe6;
+      o.material=o.material.clone();o.material.color.set(c).convertSRGBToLinear();o.material.roughness=0.45;o.material.metalness=0;});
+    /* barrel forward, angled a touch toward the middle of the screen so you see the side of the gun */
+    m.rotation.y=-Math.PI/2+0.16;g.add(m);
+    const b=new THREE.Box3().setFromObject(m),k=L/Math.max(0.01,b.max.z-b.min.z);m.scale.setScalar(k);
+    m.position.set(0.02,-0.05,-0.16);const b2=new THREE.Box3().setFromObject(m);
+    const len=(b2.max.z-b2.min.z)*0.36,rad=side?0.026:0.04,ty=b2.max.y-0.02+rad,tz=(b2.min.z+b2.max.z)/2+(side?0.02:0.04),tx=(b2.min.x+b2.max.x)/2;
+    const glass=new THREE.MeshStandardMaterial({color:0xdff6ff,transparent:true,opacity:0.16,roughness:0.05,depthWrite:false}),water=new THREE.MeshStandardMaterial({color:0x2aa9ff,emissive:0x0b4f8a,emissiveIntensity:0.4,transparent:true,opacity:0.9,roughness:0.1});
+    const cz=(r1,l)=>{const q=new THREE.CylinderGeometry(r1,r1,l,14);q.rotateX(Math.PI/2);return q;};
+    const gl=new THREE.Mesh(cz(rad,len),glass);gl.position.set(tx,ty,tz);gl.rotation.y=0.16;g.add(gl);
+    const tank=new THREE.Mesh(cz(rad*0.86,len*0.92),water);tank.position.set(tx,ty,tz);tank.rotation.y=0.16;g.add(tank);
+    /* the tube from the tank to the nozzle */
+    const tube=new THREE.Mesh(new THREE.CylinderGeometry(0.007,0.007,Math.abs(b2.min.z-tz)*0.9,6),new THREE.MeshStandardMaterial({color:def.c[1]}));tube.rotation.set(Math.PI/2,0,-0.16);tube.position.set(tx+0.02,ty-rad*0.6,(tz+b2.min.z)/2);g.add(tube);
+    const fur=vm.userData.fur,add=(geo,x,y,z,rx,ry)=>{const q=new THREE.Mesh(geo,fur);q.position.set(x,y,z);if(rx!==undefined)q.rotation.set(rx,ry||0,0);g.add(q);return q;};
+    add(new THREE.SphereGeometry(0.05,10,8),0.005,-0.08,0.03);
+    {const a=new THREE.CylinderGeometry(0.04,0.05,0.3,10);a.rotateX(Math.PI/2);add(a,0.05,-0.17,0.17,-0.5);}
+    if(!side){add(new THREE.SphereGeometry(0.05,10,8),-0.01,-0.07,b2.min.z*0.45);const a=new THREE.CylinderGeometry(0.04,0.05,0.34,10);a.rotateX(Math.PI/2);add(a,-0.12,-0.15,b2.min.z*0.45+0.15,-0.35,-0.6);}
+    g.userData={tank:tank,tankY:ty,tankDrop:rad*0.8,pump:m,pumpZ:0,adsY:side?0.058:0.02-Math.max(0,ty-0.08)};
+    g.visible=false;vm.add(g);e.g=g;refreshVM();
+  }catch(err){console.error('gun model failed:',def.id,err&&err.stack||err);}});
+  return e;
+}
+/* the groups shown for the primary and sidearm slots */
+function refreshVM(){
+  const want=[0,1].map(sl=>{const e=gunVM(GUN(sl));return e.g||VM_STAND[sl];});
+  vm.children.forEach(c=>{c.visible=false;});
+  guns.length=0;want.forEach(g=>guns.push(g));
+  if(guns[weapon])guns[weapon].visible=state==='play'||state==='pause';
+}
+function setWeapon(w){if(w===weapon||!P.alive)return;weapon=w;ammo[w]=Math.min(ammo[w],GUN(w).mag);SFX.play('weapon',{game:true});reloadT=0;guns.forEach((g,i)=>g.visible=i===w);fireCool=0.25;kick=0.5;ads=false;}
+function reload(){const W=GUN(weapon);if(reloadT>0||ammo[weapon]>=W.mag||!P.alive)return;reloadT=W.reload;ads=false;snd('pump');setTimeout(()=>{if(reloadT>0)snd('pump');},W.reload*500);}
 function shoot(){
-  const W=WEAPONS[weapon];
+  const W=GUN(weapon);
   if(ammo[weapon]<=0){snd('dry');reload();return;}
   ammo[weapon]--;fireCool=W.rate;P.lastFire=time;
-  const moving=Math.hypot(keys.w||keys.s?1:0,keys.a||keys.d?1:0)+Math.hypot(jx,jy),sp=(ads?W.ads:W.spread)*(1+moving*0.8)+(coarse?0:0)+recoil*0.6;
-  v1.set((Math.random()-0.5)*2*sp,(Math.random()-0.5)*2*sp,-1).normalize().applyQuaternion(camera.quaternion);
-  const o=camera.position;let tw=rayWorld(o.x,o.y,o.z,v1.x,v1.y,v1.z,W.range),hitS=null,head=false,tb=tw;const tol=coarse?1.5:1;
-  soldiers.forEach(s=>{if(!s.alive||s.team===0)return;
-    [[1.47,0.34,true],[0.88,0.4,false],[0.38,0.3,false]].forEach(q=>{const t=raySphere(o.x,o.y,o.z,v1.x,v1.y,v1.z,s.x,q[0],s.z,q[1]*tol);if(t>0&&t<tb){tb=t;hitS=s;head=q[2];}});});
-  v2.copy(o).addScaledVector(v1,tb);
+  /* moving, jumping or hip-firing spreads the spray; crouching steadies it */
+  const moving=Math.hypot(keys.w||keys.s?1:0,keys.a||keys.d?1:0)+Math.hypot(jx,jy),sp=((ads?W.ads:W.spread)*(1+moving*0.8)+recoil*0.6)*(jumpY>0?2.2:1)*(1-0.35*crouchK);
+  const o=camera.position,tol=coarse?1.5:1;
   v3.set(0.16*(1-adsK),-0.12-0.05*(1-adsK),-0.75).applyQuaternion(camera.quaternion).add(o);
-  stream(v3,v2);splash(v2.x,v2.y,v2.z,hitS?5:3,2.5);
-  if(hitS)damage(hitS,P,W.dmg*(head?1.5:1)*(tb>W.range*0.6?0.7:1),head,false);
+  for(let k=0;k<(W.pellets||1);k++){
+    v1.set((Math.random()-0.5)*2*sp,(Math.random()-0.5)*2*sp,-1).normalize().applyQuaternion(camera.quaternion);
+    let tw=rayWorld(o.x,o.y,o.z,v1.x,v1.y,v1.z,W.range),hitS=null,head=false,tb=tw;
+    soldiers.forEach(s=>{if(!s.alive||s.team===0)return;
+      [[1.47,0.34,true],[0.88,0.4,false],[0.38,0.3,false]].forEach(q=>{const t=raySphere(o.x,o.y,o.z,v1.x,v1.y,v1.z,s.x,q[0],s.z,q[1]*tol);if(t>0&&t<tb){tb=t;hitS=s;head=q[2];}});});
+    v2.copy(o).addScaledVector(v1,tb);
+    if(k<3)stream(v3,v2);splash(v2.x,v2.y,v2.z,hitS?5:(W.pellets?1:3),2.5);
+    if(hitS)damage(hitS,P,W.dmg*(head?1.5:1)*(tb>W.range*0.6?0.7:1),head,false);
+  }
   pitch=clamp(pitch+W.kick*(ads?0.6:1),-1.3,1.3);yaw+=(Math.random()-0.5)*W.kick*0.7;recoil=Math.min(0.03,recoil+W.kick*0.5);kick=1;
-  snd(weapon?'pistol':'ar');
+  snd(W.snd);
   if(ammo[weapon]<=0)reload();
 }
 function playerBalloon(){
@@ -685,12 +765,17 @@ function frame(now){
     if(mode==='team'){matchT-=dt;if(matchT<=0)endMatch();}else waveTick(dt);
     /* player */
     if(P.alive){
-      const W=WEAPONS[weapon];
+      const W=GUN(weapon);
       if(noLock&&!coarse){const ax=Math.abs(mouseX)>0.25?mouseX:0,ay=Math.abs(mouseY)>0.3?mouseY:0;yaw-=ax*Math.abs(ax)*2.4*dt;pitch-=ay*Math.abs(ay)*1.4*dt;}
       assist(dt);
       yaw+=((keys.left?1:0)-(keys.right?1:0))*1.9*dt;pitch+=((keys.up?1:0)-(keys.down?1:0))*1.2*dt;pitch=clamp(pitch,-1.3,1.3);
       let f=(keys.w?1:0)-(keys.s?1:0)-jy,r=(keys.d?1:0)-(keys.a?1:0)+jx;const l=Math.hypot(f,r);if(l>1){f/=l;r/=l;}
-      const sp=(ads?2.8:sprint&&f>0.5&&!firing?7.4:5)*(reloadT>0?0.85:1);
+      crouchK+=((crouch&&jumpY<=0?1:0)-crouchK)*Math.min(1,dt*12);
+      if(jumpY>0||jumpV>0){jumpV-=15*dt;jumpY=Math.max(0,jumpY+jumpV*dt);if(jumpY===0){jumpV=0;SFX.play('land',{game:true,vol:0.6});}}
+      /* peek: Q and E lean the view (and your gun) sideways, stopping short of walls */
+      leanK+=(((keys.e?1:0)-(keys.q?1:0))-leanK)*Math.min(1,dt*10);
+      {const rx=Math.cos(yaw),rz=-Math.sin(yaw),dir=Math.sign(leanK)||1,free=rayWorld(P.x,eyeY(),P.z,rx*dir,0,rz*dir,0.8)-0.22;leanOff=dir*Math.min(Math.abs(leanK)*0.55,Math.max(0,free));}
+      const sp=(ads?2.8:sprint&&f>0.5&&!firing&&!crouch?7.4:5)*(reloadT>0?0.85:1)*(W.move||1)*(1-0.5*crouchK)*(1-0.35*Math.abs(leanK));
       P.x+=(-Math.sin(yaw)*f+Math.cos(yaw)*r)*sp*dt;P.z+=(-Math.cos(yaw)*f-Math.sin(yaw)*r)*sp*dt;collide(P);
       bob+=dt*l*sp*1.7;
       fireCool-=dt;
@@ -717,21 +802,27 @@ function frame(now){
   bursts.forEach(e=>{if(e.t>0){e.t-=dt;const k=1-e.t/0.35;e.m.scale.setScalar(0.6+k*4);e.m.material.opacity=0.4*(1-k);if(e.t<=0)e.m.visible=false;}});
 
   /* camera */
-  const W=WEAPONS[weapon];
+  const W=GUN(weapon);
   adsK+=((ads&&P.alive&&reloadT<=0?1:0)-adsK)*Math.min(1,dt*14);recoil=Math.max(0,recoil-dt*0.09);kick=Math.max(0,kick-dt*7);
   if(state==='menu'||state==='over'){camera.position.set(Math.cos(time*0.12)*30,15,Math.sin(time*0.12)*24);camera.lookAt(0,1,0);camera.fov=60;}
   else{
     camera.fov+=((68-(68-W.fov)*adsK+(sprint&&!ads&&keys.w?4:0))-camera.fov)*Math.min(1,dt*12);
-    camera.position.set(P.x,(P.alive?EYE:Math.max(0.5,EYE-(3.2-deadT)*1.4))+Math.sin(bob)*0.03*(1-adsK),P.z);
-    camera.rotation.set(pitch,yaw,P.alive?0:0.5);
+    const lo=P.alive?leanOff:0;
+    camera.position.set(P.x+Math.cos(yaw)*lo,(P.alive?eyeY():Math.max(0.5,EYE-(3.2-deadT)*1.4))+Math.sin(bob)*0.03*(1-adsK)*(jumpY>0?0:1),P.z-Math.sin(yaw)*lo);
+    camera.rotation.set(pitch,yaw,P.alive?-leanK*0.13:0.5);
+    /* where rivals see you from: your head, wherever you lean it */
+    P.cx=camera.position.x;P.cz=camera.position.z;
   }
   camera.updateProjectionMatrix();
   const rl=reloadT>0?Math.sin((1-reloadT/W.reload)*Math.PI):0;
-  vm.scale.setScalar(0.48);vm.position.set(0.15*(1-adsK)+Math.cos(bob*0.5)*0.004*(1-adsK),-0.115+(weapon?0.055:0.036)*adsK-rl*0.09+Math.sin(bob)*0.004*(1-adsK),-0.5+0.08*adsK+kick*0.02);
+  const GU=guns[weapon].userData;
+  vm.scale.setScalar(0.48);vm.position.set(0.15*(1-adsK)+Math.cos(bob*0.5)*0.004*(1-adsK),-0.115+GU.adsY*adsK-rl*0.09+Math.sin(bob)*0.004*(1-adsK)-crouchK*0.01,-0.5+0.08*adsK+kick*0.02);
   vm.rotation.set(kick*0.05-rl*0.5,0,rl*0.25);
-  pumps[weapon].position.z=(weapon?0.09:-0.3)+(reloadT>0?Math.sin((1-reloadT/W.reload)*Math.PI*4)*0.04:0);
-  const fr=ammo[weapon]/W.mag;tanks[weapon].scale.set(1,Math.max(0.02,fr),1);tanks[weapon].position.y=(weapon?0.07:0.09)-(1-fr)*(weapon?0.03:0.043);
-  vm.visible=(state==='play'||state==='pause')&&P.alive;
+  if(GU.pump!==guns[weapon].children[0]||GU.pumpZ)GU.pump.position.z=GU.pumpZ+(reloadT>0?Math.sin((1-reloadT/W.reload)*Math.PI*4)*0.04:0);
+  const fr=Math.min(1,ammo[weapon]/W.mag);GU.tank.scale.set(1,Math.max(0.02,fr),1);GU.tank.position.y=GU.tankY-(1-fr)*GU.tankDrop;
+  /* a scope fills the screen when the Hydro Lance is aimed */
+  const scoped=!!W.scope&&adsK>0.85&&P.alive&&play;$('scope').hidden=!scoped;
+  vm.visible=(state==='play'||state==='pause')&&P.alive&&!scoped;
 
   /* hud */
   hudT-=dt;
@@ -746,7 +837,7 @@ function frame(now){
     drawMini();
   }
   const gap=6+((ads?W.ads:W.spread)*520+recoil*520)*(1-adsK*0.5);
-  $('x1').style.left=(-gap-9)+'px';$('x2').style.left=gap+'px';$('x3').style.top=(-gap-9)+'px';$('x4').style.top=gap+'px';$('xh').style.opacity=P&&P.alive&&play?(adsK>0.6&&!weapon?0.35:1):0;
+  $('x1').style.left=(-gap-9)+'px';$('x2').style.left=gap+'px';$('x3').style.top=(-gap-9)+'px';$('x4').style.top=gap+'px';$('xh').style.opacity=P&&P.alive&&play&&$('scope').hidden?(adsK>0.6&&!weapon?0.35:1):0;
   if(hitT>0){hitT-=dt;if(hitT<=0)$('hit').style.opacity=0;}
   if(msgT>0){msgT-=dt;if(msgT<=0){$('msg').textContent='';$('sub').textContent='';}}
 
@@ -760,7 +851,8 @@ function frame(now){
 
 /* ---------- flow ---------- */
 function startMatch(){
-  initAudio();buildSoldiers();score=[0,0];matchT=MATCH;streak=0;weapon=0;guns.forEach((g,i)=>g.visible=i===0);firing=false;ads=false;
+  initAudio();buildSoldiers();score=[0,0];matchT=MATCH;streak=0;weapon=0;refreshVM();guns.forEach((g,i)=>g.visible=i===0);firing=false;ads=false;
+  crouch=false;crouchK=0;jumpY=0;jumpV=0;leanK=0;
   vm.userData.fur.color.setHex(CAST[playerKind].head);
   balloons.forEach(b=>{b.on=false;b.m.visible=false;});$('feed').innerHTML='';
   wave=0;toSpawn=0;cleaned=0;breakT=mode==='mud'?2.5:0;
@@ -798,7 +890,24 @@ function endMatch(){
 }
 function recLine(){const w=best.wins||[0,0,0];$('rec').textContent=(best.soaks!==undefined?'Team wins: Recruit '+w[0]+' · Regular '+w[1]+' · Veteran '+w[2]+'   ':'')+(best.wave?'·   Best Mudwalkers run: wave '+best.wave:'');
   $('blurb').textContent=mode==='team'?'Blue team against Orange. Soak a rival to score; the first team to 20 wins, or the leader after five minutes. Getting soaked sends you back to your spawn. You dry off if you stay out of the spray.':'You and three teammates against waves of Mudwalkers. Water washes them clean. They get faster and tougher each wave, and if they mud you the run is over. Tanks and balloons refill between waves.';}
-function showMenu(){state='menu';$('results').hidden=true;$('pause').hidden=true;$('hud').hidden=true;$('menu').hidden=false;recLine();}
+let loArm=null;
+function saveLo(){try{localStorage.setItem('mwf-loadout',JSON.stringify(loadout));}catch(e){}}
+function renderLoadout(){
+  const have=api_&&api_.coinsLeft?api_.coinsLeft():null;$('locoins').textContent=have===null?'':'🪙 '+have;
+  [['lop',0],['los',1]].forEach(q=>{const el=$(q[0]);el.innerHTML='';
+    ARMORY.filter(g=>g.slot===q[1]).forEach(g=>{
+      const b=document.createElement('button');b.type='button';const own=gunOwned(g),on=loadout[q[1]]===g.id,armed=loArm===g.id;
+      b.setAttribute('aria-pressed',on);if(!own)b.className=armed?'locked armed':'locked';
+      b.innerHTML=g.name+'<small>'+(own?g.d:armed?(have!==null&&have<g.price?'Need '+(g.price-have)+' more coins':'Tap again to buy for '+g.price):'🔒 '+g.price+' coins · '+g.d)+'</small>';
+      b.addEventListener('click',()=>{
+        if(own){loadout[q[1]]=g.id;loArm=null;saveLo();refreshVM();renderLoadout();return;}
+        if(!armed){loArm=g.id;renderLoadout();return;}
+        if(have!==null&&have<g.price){SFX.play('error',{game:true});return;}
+        if(api_&&api_.buy&&api_.buy('gun-'+g.id,g.price)){loadout[q[1]]=g.id;saveLo();refreshVM();SFX.play('win',{game:true});}
+        loArm=null;renderLoadout();});
+      el.appendChild(b);});});
+}
+function showMenu(){renderLoadout();state='menu';$('results').hidden=true;$('pause').hidden=true;$('hud').hidden=true;$('menu').hidden=false;recLine();}
 function pause(){if(state!=='play')return;state='pause';firing=false;ads=false;$('pause').hidden=false;try{if(document.pointerLockElement===view)document.exitPointerLock();}catch(e){}}
 function resume(){if(state!=='pause')return;state='play';$('pause').hidden=true;last=performance.now();if(!coarse)lock();}
 const view=$('view');
@@ -818,18 +927,21 @@ try{const d=parseInt(localStorage.getItem('mwf-diff'),10);if(d>=0&&d<3){diff=d;[
   const c=parseInt(localStorage.getItem('mwf-cast'),10);if(c>=0&&c<4)playerKind=c;}catch(e){}
 $('start').addEventListener('click',startMatch);$('again').addEventListener('click',startMatch);$('change').addEventListener('click',showMenu);
 $('resume').addEventListener('click',resume);$('quit').addEventListener('click',()=>{state='play';endMatch();});
-const KEYS={KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d',ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
+const KEYS={KeyW:'w',KeyA:'a',KeyS:'s',KeyD:'d',ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down',KeyQ:'q',KeyE:'e'};
+function jump(){if(state==='play'&&P.alive&&jumpY<=0&&crouchK<0.3){jumpV=5.6;jumpY=0.001;SFX.play('jump',{game:true,vol:0.7});}}
+function toggleCrouch(){if(state==='play'&&P.alive){crouch=!crouch;if(crouch)sprint=false;}}
 window.addEventListener('keydown',e=>{
   if(state==='menu'||state==='over'){if(e.code==='Enter'&&!e.repeat){e.preventDefault();startMatch();}return;}
   if(KEYS[e.code]){keys[KEYS[e.code]]=true;e.preventDefault();return;}
   if(e.repeat)return;
   if(e.code==='ShiftLeft'||e.code==='ShiftRight')sprint=true;
-  else if(e.code==='KeyR')reload();else if(e.code==='Digit1')setWeapon(0);else if(e.code==='Digit2')setWeapon(1);else if(e.code==='KeyQ')setWeapon(1-weapon);
+  else if(e.code==='KeyR')reload();else if(e.code==='Digit1')setWeapon(0);else if(e.code==='Digit2')setWeapon(1);else if(e.code==='KeyX')setWeapon(1-weapon);
+  else if(e.code==='KeyC')toggleCrouch();else if(e.code==='ControlLeft'||e.code==='ControlRight'){e.preventDefault();if(!crouch)toggleCrouch();}
   else if(e.code==='KeyG')playerBalloon();else if(e.code==='KeyP'){if(state==='play')pause();else resume();}
-  else if(e.code==='Space'){e.preventDefault();if(state==='play'&&P.alive)firing=true;}
+  else if(e.code==='Space'){e.preventDefault();jump();}
   else if(e.code==='KeyF')ads=!ads;
 });
-window.addEventListener('keyup',e=>{if(KEYS[e.code])keys[KEYS[e.code]]=false;if(e.code==='ShiftLeft'||e.code==='ShiftRight')sprint=false;if(e.code==='Space')firing=false;});
+window.addEventListener('keyup',e=>{if(KEYS[e.code])keys[KEYS[e.code]]=false;if(e.code==='ShiftLeft'||e.code==='ShiftRight')sprint=false;if((e.code==='ControlLeft'||e.code==='ControlRight')&&crouch)crouch=false;});
 window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;firing=false;sprint=false;});
 window.addEventListener('mousemove',e=>{
   if(state!=='play')return;
@@ -862,6 +974,7 @@ view.addEventListener('pointermove',e=>{if(!touchLook||e.pointerId!==touchLook.i
   $('tauto').addEventListener('pointerdown',e=>{e.preventDefault();autoFire=!autoFire;$('tauto').textContent='Auto-fire: '+(autoFire?'on':'off');$('tauto').classList.toggle('on',autoFire);});
   tap($('tads'),()=>{ads=!ads;$('tads').classList.toggle('on',ads);});
   tap($('tswap'),()=>setWeapon(1-weapon));tap($('trel'),reload);tap($('tbal'),playerBalloon);
+  tap($('tjump'),jump);tap($('tcrouch'),()=>{toggleCrouch();$('tcrouch').classList.toggle('on',crouch);});
 }
 
 buildMap(mapId);buildSoldiers();soldiers.forEach(s=>{if(!s.zombie)spawn(s);});showMenu();

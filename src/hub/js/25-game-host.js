@@ -17,9 +17,10 @@ function openGame(i){
   /* what a game can ask of the basement: your colours, and paying out coins */
   const paint=KART_PAINTS.find(k=>k.id===store.getItem('kart-paint')&&owns(k.id));
   const api={cast:arr=>{if(arr[av.species])arr[av.species].kart=paint?paint.c:av.color;},
-    coins:(n,why)=>addCoins(n,why),owns:id=>owns(id),coinsLeft:()=>coins()};
+    coins:(n,why)=>addCoins(n,why),owns:id=>owns(id),coinsLeft:()=>coins(),
+    buy:(id,price)=>{if(owns(id))return true;if(!spendCoins(price))return false;grant(id);return true;}};
   coinLog=[];
-  try{window.GAMES[m.id](root,api,win,f=>{if(!g.dead)requestAnimationFrame(t=>{if(!g.dead)f(t);});},store);}catch(e){closeGame();toast('That cabinet would not start');return;}
+  try{window.GAMES[m.id](root,api,win,f=>{if(!g.dead)requestAnimationFrame(t=>{if(!g.dead)f(t);});},store);}catch(e){console.error('cabinet failed:',e&&e.stack||e);closeGame();toast('That cabinet would not start');return;}
   root.querySelectorAll('[data-exit]').forEach(b=>b.addEventListener('click',closeGame));
   leave.addEventListener('click',closeGame);
   mode='game';hubAudioQuiet();SFX.play('start');

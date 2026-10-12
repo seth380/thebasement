@@ -15,6 +15,7 @@ Everything in `assets/` was made by someone else and is used under the licence s
 | `models/characters/monsters/*.glb` (17) | [Cute Animated Monsters](https://quaternius.com), Aug 2020 | Quaternius | CC0 |
 | `models/characters/animals/*.glb` (8) | [Ultimate Animated Animals](https://quaternius.com), July 2021 | Quaternius | CC0 |
 | `models/fish/*.glb` (16) | [Cute Fish Pack](https://quaternius.com), Feb 2020 | Quaternius | CC0 |
+| `models/waterfare/guns/*.glb` (8 guns) | [Toon Shooter Game Kit](https://quaternius.com), Dec 2022 | Quaternius | CC0 |
 | `models/waterfare/Character_*.glb` | [Toon Shooter Game Kit](https://quaternius.com), Dec 2022 | Quaternius | CC0 |
 | `models/waterfare/Zombie_*.glb` | [Zombie Apocalypse Kit](https://quaternius.com), March 2024 | Quaternius | CC0 |
 | `models/nature/*` (35 models, 12 textures) | [Stylized Nature MegaKit](https://quaternius.com), free Standard edition | Quaternius | CC0 |
