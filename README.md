@@ -60,6 +60,25 @@ The server runs on Node, not Python, so uvicorn won't run it. Install Node once:
 
 After pulling new changes, stop the server (Ctrl+C) and run `npm run dev` again.
 
+## Sharing a public link (Tailscale Funnel)
+
+Funnel gives your PC a public `https://….ts.net` link that anyone can open, no app needed on their end. Because anyone with the link gets in, turn on the access code first.
+
+1. Start the game with a code:
+   ```
+   npm run dev -- --code pick-any-word
+   ```
+2. In a second PowerShell window, run:
+   ```
+   tailscale funnel 8080
+   ```
+   The first time, Tailscale may print a link to switch Funnel on for your account; open it, approve, and run the command again. It then prints your public link.
+3. Send people the link with the code on the end, e.g. `https://your-pc.your-tailnet.ts.net/?code=pick-any-word`. They go straight in, and their browser remembers it for 30 days. Anyone who opens the link without the code sees a box asking for it.
+
+Add `&room=testers` to the link to keep testers in their own room. Stop sharing by closing the funnel window (Ctrl+C), or run `tailscale funnel reset`.
+
+Your PC has to stay on with the game running while people play. Saves (trophies, coins, unlocks) live in each player's own browser.
+
 ## Hosting online
 
 The server is one small Node process that serves the game and relays positions over a WebSocket at `/ws`, so any host that runs Node and allows WebSockets works. `render.yaml` sets it up on Render's free plan (New > Blueprint > pick this repo); the free plan sleeps when idle, so the first visit after a quiet spell takes a little while to wake.
