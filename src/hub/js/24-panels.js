@@ -45,6 +45,8 @@ $('h-b-look').addEventListener('click',()=>openCustom());
 function openTrophies(){SFX.play('open');refreshTrophies();$('h-troph').hidden=false;}
 $('h-b-troph').addEventListener('click',openTrophies);
 $('h-t-close').addEventListener('click',()=>closeOvers());
-function sit(){SFX.play('drop2');mode='sit';P.x=-6.62;P.z=2;P.h=-Math.PI/2;}
-function stand(){mode='walk';P.x=-7.35;P.z=2;}
+/* seats: the basement couch, or another one (the sofa upstairs) with its own spot to stand up to and camera */
+const COUCH={x:-6.62,z:2,h:-Math.PI/2,stand:[-7.35,2],cam:[-5.05,1.95,2],look:[-11,1.25,2]};let seat=COUCH;
+function sit(s){seat=s||COUCH;SFX.play('drop2');mode='sit';P.x=seat.x;P.z=seat.z;P.h=seat.h;}
+function stand(){mode='walk';P.x=seat.stand[0];P.z=seat.stand[1];}
 

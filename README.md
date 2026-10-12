@@ -1,6 +1,6 @@
 # The Basement
 
-A walk-around 3D basement in the browser. Arcade cabinets on the back wall launch minigames; the room itself has pool, foosball, chess, checkers, an aquarium, and a secret or two.
+A walk-around 3D basement in the browser. Arcade cabinets on the back wall launch minigames; the room itself has pool, foosball, chess, checkers, an aquarium, and a secret or two. The stairs lead up to the house: a kitchen (pancakes, a fridge), a living room (sofa, TV, fireplace) and a bedroom (nap until morning, wardrobe).
 
 ## Cabinets
 

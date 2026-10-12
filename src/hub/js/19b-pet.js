@@ -33,7 +33,7 @@ function petTick(dt){
   const p=PET,a=p.a;if(!a)return;
   /* the "Pet Pixel" prompt follows the dog around */
   p.thing.x=p.x;p.thing.z=p.z;
-  const dP=Math.hypot(P.x-p.x,P.z-p.z),inBasement=P.x>-10.9;
+  const dP=Math.hypot(P.x-p.x,P.z-p.z),inBasement=P.x>-10.9&&!lvl;
   p.t-=dt;if(p.barkT>0)p.barkT-=dt;
   if(p.state!=='happy'){
     if(inBasement&&mode==='walk'&&dP<4.5&&dP>1.6&&P.move>0.3&&p.state!=='eat'){p.state='follow';}

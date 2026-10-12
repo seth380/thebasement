@@ -10,7 +10,7 @@ function hubAudioTick(dt){
   const dw=Math.hypot(P.x-(CAVE.x-5.6),P.z-CAVE.z),inCave=P.x<-11;
   AUD.fall.vol(inCave?Math.max(0.03,0.34*Math.min(1,5/Math.max(2.5,dw))):(sec.open&&Math.hypot(P.x+11,P.z+6.5)<3.5?0.02:0));
   AUD.fall.freq(inCave?900+1400*Math.min(1,4/Math.max(2,dw)):500);
-  if(mode!=='walk')return;
+  if(mode!=='walk'||lvl)return;
   /* aquarium bubbles */
   AUD.bubT-=dt;const da=Math.hypot(P.x+8.6,P.z+6.75);
   if(AUD.bubT<=0&&da<3.4){AUD.bubT=0.12+Math.random()*0.7;const f=500+Math.random()*700;SFX.blip(f,f*1.7,0.06,'sine',0.035*(1-da/3.4));}
