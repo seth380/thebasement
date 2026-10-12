@@ -1,15 +1,16 @@
 /* ---------- friends in the basement ---------- */
 const npcs=[];
-function npcMake(name,kind,head,color,lines,route){
+function npcMake(name,kind,head,color,lines,route,model){
   const look={name:name,species:Math.max(0,SPECIES.findIndex(s=>s.kind===kind)),color:color,hat:0};
   const b=makeAvatarModel(look,{tagColor:'#ffe9a8'});scene.add(b.g);
-  const n={name:name,look:look,b:b,x:0,z:0,h:0,lines:lines,route:route,i:0,wait:0,pose:'walk',face:0,phase:rnd()*6,walk:0,mv:0,said:0};
+  const n={name:name,model:model,look:look,b:b,x:0,z:0,h:0,lines:lines,route:route,i:0,wait:0,pose:'walk',face:0,phase:rnd()*6,walk:0,mv:0,said:0};
   if(route){n.x=route[0][0];n.z=route[0][1];}npcs.push(n);return n;
 }
-/* NPCs wear the models in assets/models/npcs, one each, in order; they stay critters until those load */
+/* each NPC asks for its own model (a person, a mech, a panda, an alien); without that file it borrows a mech from assets/models/npcs.
+   They stay critters until the model loads */
 function npcReskin(n,m){
   GFX.preload(m.file,()=>{
-    const nb=makeAvatarModel(Object.assign({},n.look,{model:m.id}),{tagColor:'#ffe9a8',height:1.55});if(!nb.actor)return;
+    const nb=makeAvatarModel(Object.assign({},n.look,{model:m.id}),{tagColor:'#ffe9a8',height:m.height||1.55});if(!nb.actor)return;
     scene.remove(n.b.g);n.b=nb;scene.add(nb.g);
     /* a model that cannot sit gets up off the couch: it watches TV from behind it and strolls around instead */
     if(n.pose==='sit'&&!nb.actor.has('sit')){const W=-Math.PI/2;n.route=[[-3.6,1.4],[-3.6,2.6,W,10,'look'],[-2.2,4.6],[0.4,4.4,0,5,'look'],[-2.2,4.6]];n.i=0;n.x=-3.6;n.z=1.4;n.pose='walk';}
@@ -17,15 +18,15 @@ function npcReskin(n,m){
 }
 {
   const N=Math.PI,W=-Math.PI/2,Sx=0;
-  npcMake('Pepper','cat',0x9aa3b5,0x7b5cff,['This couch is the best seat in the house.','Have you beaten my kart time yet?','Winner picks the next game. Basement rules.'],null);
+  npcMake('Pepper','cat',0x9aa3b5,0x7b5cff,['This couch is the best seat in the house.','Have you beaten my kart time yet?','Winner picks the next game. Basement rules.'],null,'characters-modular-men-casual-hoodie');
   npcMake('Biscuit','bear',0xb5733c,0xff7a1a,['The orange rings in Cloudtop Run give you a boost.','I keep losing at checkers. Do not tell anyone.','The fish like it when you feed them.'],
-    [[0,-5.2],[1.15,-6.25,N,9,'play'],[0,-5.2],[-6.5,-5.2],[-8.6,-6.3,N,6,'look'],[-6.5,-5.2],[-6.5,-1.5],[-4.9,-1.2],[-5.2,3.0,W,7,'look'],[-4.9,-1.2],[-2,-1]]);
+    [[0,-5.2],[1.15,-6.25,N,9,'play'],[0,-5.2],[-6.5,-5.2],[-8.6,-6.3,N,6,'look'],[-6.5,-5.2],[-6.5,-1.5],[-4.9,-1.2],[-5.2,3.0,W,7,'look'],[-4.9,-1.2],[-2,-1]],'npcs-mechs-leela');
   npcMake('Clover','bunny',0xf4efe6,0xff5fa2,['Flick up-left for a kickflip. It took me ages to learn.','Want to play pool later?','The Warehouse has a huge bank on the east wall.'],
-    [[-2,-1],[3.2,-0.5],[6.4,-0.75,N,6,'look'],[3.2,-0.5],[3.2,2.8],[5.4,3.75,Sx,6,'look'],[3.2,2.8],[0,3.2],[1.2,4.1,Sx,5,'look'],[0,3.2]]);
+    [[-2,-1],[3.2,-0.5],[6.4,-0.75,N,6,'look'],[3.2,-0.5],[3.2,2.8],[5.4,3.75,Sx,6,'look'],[3.2,2.8],[0,3.2],[1.2,4.1,Sx,5,'look'],[0,3.2]],'characters-monsters-panda');
   npcMake('Moss','frog',0x7ddc4a,0x1fc46b,['Mudwalkers got me on wave four.','Auto-fire is my secret weapon.','I am reading every book on that shelf. Slowly.'],
-    [[-3.45,-6.25,N,13,'play'],[-3.45,-5],[-6.5,-5.2],[-6.5,-1.5],[-9.9,-4.5,W,7,'look'],[-6.5,-1.5],[-6.5,-5.2],[-3.45,-5]]);
+    [[-3.45,-6.25,N,13,'play'],[-3.45,-5],[-6.5,-5.2],[-6.5,-1.5],[-9.9,-4.5,W,7,'look'],[-6.5,-1.5],[-6.5,-5.2],[-3.45,-5]],'characters-monsters-cactus');
   const p=npcs[0];p.x=-6.62;p.z=2.86;p.h=W;p.pose='sit';
-  const NM=GFX.roster.npcs;if(NM.length)npcs.forEach((n,i)=>npcReskin(n,NM[i%NM.length]));
+  const NM=GFX.roster.npcs;npcs.forEach((n,i)=>{const m=modelFor(n.model)||(NM.length?NM[i%NM.length]:null);if(m)npcReskin(n,m);});
 }
 function npcTick(dt,t){
   npcs.forEach(n=>{
