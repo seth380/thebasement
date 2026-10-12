@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node tools/build.js",
     "start": "node server/server.js",
-    "dev": "node tools/build.js && node server/server.js"
+    "dev": "node tools/build.js && node server/server.js",
+    "test": "node --test"
   },
   "engines": {
     "node": ">=18"
