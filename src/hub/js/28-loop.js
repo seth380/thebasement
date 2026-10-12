@@ -64,7 +64,7 @@ function frame(now){
   clockTick-=dt;if(clockTick<=0){clockTick=2;clockTex.userData.go();}
   tvL.intensity=0.5+Math.sin(tvT*3.1)*0.06;neonL.intensity=1.0+Math.sin(tvT*17)*0.04;aqL.intensity=0.9+Math.sin(tvT*1.7)*0.06;
   if(toastT>0){toastT-=dt;if(toastT<=0)$('h-toast').textContent='';}
-  netFrame(dt);hubAudioTick(dt);
+  netFrame(dt);hubAudioTick(dt);petTick(dt);
   renderer.render(scene,camera);
   requestAnimationFrame(frame);
 }

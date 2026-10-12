@@ -12,12 +12,17 @@ Everything in `assets/` was made by someone else and is used under the licence s
 | `audio/bong`, `click`, `click2`, `close`, `confirm`, `drop`, `drop2`, `error`, `exit`, `glass`, `goal`, `join`, `leave`, `open`, `pluck`, `scrape`, `select`, `start`, `switch`, `tick`, `toggle`, `win` | [Interface Sounds](https://kenney.nl/assets/interface-sounds), via [Calinou/kenney-interface-sounds](https://github.com/Calinou/kenney-interface-sounds) | Kenney | CC0 |
 | `models/characters/modular-men/*.glb` (11 characters) | [Ultimate Modular Men](https://quaternius.com/packs/ultimatemodularcharacters.html), Feb 2022 | Quaternius | CC0 |
 | `models/npcs/mechs/*.glb` (George, Leela, Mike, Stan) | [Animated Mech Pack](https://quaternius.com/packs/animatedmech.html), March 2021, flat-colour version | Quaternius | CC0 |
+| `models/characters/monsters/*.glb` (17) | [Cute Animated Monsters](https://quaternius.com), Aug 2020 | Quaternius | CC0 |
+| `models/characters/animals/*.glb` (8) | [Ultimate Animated Animals](https://quaternius.com), July 2021 | Quaternius | CC0 |
+| `models/fish/*.glb` (16) | [Cute Fish Pack](https://quaternius.com), Feb 2020 | Quaternius | CC0 |
+| `models/waterfare/Character_*.glb` | [Toon Shooter Game Kit](https://quaternius.com), Dec 2022 | Quaternius | CC0 |
+| `models/waterfare/Zombie_*.glb` | [Zombie Apocalypse Kit](https://quaternius.com), March 2024 | Quaternius | CC0 |
 | `models/nature/*` (35 models, 12 textures) | [Stylized Nature MegaKit](https://quaternius.com), free Standard edition | Quaternius | CC0 |
 | `vendor/three.min.js`, `vendor/GLTFLoader.js`, `vendor/SkeletonUtils.js` | [three.js r128](https://github.com/mrdoob/three.js) | three.js authors | MIT |
 
 The audio files were converted to mono mp3 and renamed; nothing else was changed.
 
-The Quaternius models were changed only to make them lighter for the web: characters and mechs converted from glTF to `.glb` with unused animations removed; nature textures shrunk to 512 px, normal maps dropped, and the see-through parts of leaf textures filled with the leaf colour so distant trees don't go dark.
+The Quaternius models were changed only to make them lighter for the web: characters, mechs, animals, monsters and Waterfare characters converted from glTF to `.glb` with unused animations removed; fish converted from FBX to `.glb`; nature textures shrunk to 512 px, normal maps dropped, and the see-through parts of leaf textures filled with the leaf colour so distant trees don't go dark.
 
 ## Adding more
 

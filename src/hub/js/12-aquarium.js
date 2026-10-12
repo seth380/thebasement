@@ -22,6 +22,13 @@ const fish=[],bubbles=[],weeds=[];let feedT=0;
     const t=new THREE.Mesh(new THREE.ConeGeometry(sz*0.55,sz*0.9,4),m);t.rotation.z=-Math.PI/2;t.scale.z=0.3;const tp=new THREE.Group();tp.position.x=-sz*0.85;t.position.x=-sz*0.4;tp.add(t);g.add(tp);
     const e=new THREE.Mesh(new THREE.SphereGeometry(sz*0.13,6,6),new THREE.MeshBasicMaterial({color:0x111111}));e.position.set(sz*0.6,sz*0.15,sz*0.32);g.add(e);const e2=e.clone();e2.position.z=-sz*0.32;g.add(e2);
     scene.add(g);fish.push({g:g,tail:tp,cx:ax+(rnd()-0.5)*0.3,cy:y0+0.16+rnd()*0.34,cz:az+(rnd()-0.5)*0.12,amp:0.42+rnd()*0.22,sp:0.35+rnd()*0.5,ph:rnd()*6,up:0,top:y0+h-0.1,face:0});});
+  /* real fish from the Cute Fish Pack when available: each swaps in for a stand-in fish, swims, and darts about at feeding time */
+  const FISH=['Clownfish','BlueTang','YellowTang','Goldfish','Betta','MandarinFish','ZebraClownFish','RoyalGramma','MoorishIdol','Puffer','Tetra','ButterflyFish'];
+  fish.forEach((f,i)=>{const file='fish/'+FISH[i%FISH.length]+'.glb';GFX.preload(file,()=>{
+    const a=GFX.actor(file,{size:FISH[i%FISH.length]==='Puffer'?0.14:0.17+rnd()*0.05,center:true,yaw:Math.PI/2,start:'Swimming_Normal'});if(!a)return;
+    /* the pack's colours export a little dull; lift them once per material */
+    a.body.traverse(o=>{if(o.isMesh&&!o.material.userData.lift){o.material.userData.lift=1;o.material.color.multiplyScalar(2.3);o.material.roughness=0.45;}});
+    f.g.children.slice().forEach(c=>{if(c!==f.tail)c.visible=false;});f.tail.visible=false;f.g.add(a.g);f.actor=a;});});
   for(let i=0;i<9;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.008+rnd()*0.006,6,6),new THREE.MeshBasicMaterial({color:0xdff7ff,transparent:true,opacity:0.7}));scene.add(m);bubbles.push({m:m,x:ax+0.62+(rnd()-0.5)*0.05,z:az+(rnd()-0.5)*0.05,y0:y0+0.08,h:h-0.14,p:rnd()});}
   solid(ax-0.87,ax+0.87,-RZ,az+0.3);
   things.push({x:ax,z:-6.75,r:1.2,text:'Feed the fish',fn:()=>{SFX.play('glass');for(let i=0;i<6;i++)SFX.blip(500+i*90,1100+i*90,0.07,'sine',0.04,{delay:0.15+i*0.11});feedT=6;toast('The fish swim up to eat');}});

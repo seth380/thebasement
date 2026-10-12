@@ -139,9 +139,9 @@ window.GFX=(function(){
      animated copy (or null if it has not loaded). Animations are found by name, so packs with different naming work:
      actor.state('idle'|'walk'|'run'|'sit'|'wave'|'play'), actor.update(dt), actor.has('sit'). */
   const rigs={};
-  const KINDS={idle:[/^idle$/i,/^idle[^a-z]/i,/idle/i],walk:[/^walk(ing)?$/i,/^walk[^a-z]/i,/walk/i],run:[/^run(ning)?$/i,/sprint/i,/^run[^a-z]/i,/run/i],
+  const KINDS={idle:[/^idle$/i,/^idle[^a-z]/i,/idle/i],walk:[/^walk(ing)?$/i,/^walk[^a-z]/i,/walk/i],run:[/^run(ning)?$/i,/sprint/i,/^gallop$/i,/^run[^a-z]/i,/run/i],
     sit:[/^sit(ting)?$/i,/sitting/i,/sit[_ -]?idle/i,/^sit/i],wave:[/wave/i,/hello/i,/emote[-_ ]?yes/i,/victory/i,/cheer/i,/^yes$/i],yes:[/^yes$/i,/emote[-_ ]?yes/i,/wave/i,/hello/i],
-    play:[/interact/i,/^use/i,/pick[-_ ]?up/i],dance:[/dance/i,/victory/i]};
+    play:[/interact/i,/^use/i,/pick[-_ ]?up/i],dance:[/dance/i,/victory/i,/^jump$/i,/gallop[_ ]?jump/i]};
   const FALL={run:'walk',play:'idle',wave:'idle',dance:'wave',yes:'wave',sit:'idle'};
   function preload(file,ok){
     const base=window.BASEMENT_ASSETS;if(!base||!THREE.GLTFLoader||!THREE.SkeletonUtils){return;}
@@ -153,6 +153,8 @@ window.GFX=(function(){
     },undefined,()=>{r.failed=true;r.q=[];});
   }
   function pickClip(clips,kind){
+    /* a name that is not one of the general kinds above is looked up as given (e.g. 'Run_Gun', 'Swimming_Normal') */
+    if(!KINDS[kind])return clips.find(c=>c.name===kind)||clips.find(c=>c.name.toLowerCase().endsWith(kind.toLowerCase()))||null;
     for(const re of (KINDS[kind]||[new RegExp(kind,'i')])){const c=clips.find(c=>re.test(c.name)&&!/carry|gun|sword|pistol|rifle|wheelchair|holding/i.test(c.name));if(c)return c;}
     for(const re of (KINDS[kind]||[]) ){const c=clips.find(c=>re.test(c.name));if(c)return c;}
     return null;
@@ -162,8 +164,9 @@ window.GFX=(function(){
     const body=THREE.SkeletonUtils.clone(r.gltf.scene);
     /* stand it on the floor, centred, opts.height tall, facing +z like the rest of the game */
     body.updateMatrixWorld(true);const box=new THREE.Box3().setFromObject(body),sz=box.getSize(new THREE.Vector3());
-    const k=(opts.height||1.5)/Math.max(0.01,sz.y);body.scale.multiplyScalar(k);
-    body.position.set(-(box.min.x+box.max.x)/2*k,-box.min.y*k,-(box.min.z+box.max.z)/2*k);
+    /* opts.size: longest side instead of height; opts.center: centre it on the origin instead of standing it on the floor */
+    const k=opts.size?opts.size/Math.max(0.01,sz.x,sz.y,sz.z):(opts.height||1.5)/Math.max(0.01,sz.y);body.scale.multiplyScalar(k);
+    body.position.set(-(box.min.x+box.max.x)/2*k,opts.center?-(box.min.y+box.max.y)/2*k:-box.min.y*k,-(box.min.z+box.max.z)/2*k);
     const g=new THREE.Group(),turn=new THREE.Group();turn.rotation.y=opts.yaw||0;turn.add(body);g.add(turn);
     const mixer=new THREE.AnimationMixer(body),clips=r.gltf.animations||[],acts={};
     function act(kind){
@@ -172,7 +175,7 @@ window.GFX=(function(){
       if(acts[kind]&&/down|up$|start|end/i.test(c.name)&&kind==='sit'){acts[kind].setLoop(THREE.LoopOnce,1);acts[kind].clampWhenFinished=true;}
       return acts[kind];
     }
-    let cur=null,curKind='',one=null;
+    let cur=null,curKind='',one=null,dying=null;
     /* rigs with no sitting animation get one by bending the hip and knee bones */
     const findB=re=>{let b=null;body.traverse(o=>{if(!b&&(o.isBone||o.type==='Object3D')&&re.test(o.name))b=o;});return b;};
     const legs0=[[findB(/^UpperLeg\.?L|thigh[._]?l|upperleg[._]?l/i),-1.45],[findB(/^UpperLeg\.?R|thigh[._]?r|upperleg[._]?r/i),-1.45],[findB(/^LowerLeg\.?L|shin[._]?l|calf[._]?l|lowerleg[._]?l/i),1.5],[findB(/^LowerLeg\.?R|shin[._]?r|calf[._]?r|lowerleg[._]?r/i),1.5]].filter(q=>q[0]),legs=legs0;
@@ -181,7 +184,7 @@ window.GFX=(function(){
     if(!hipBone||findB(/midleg/i))legs.length=0;
     const realSit=!!pickClip(clips,'sit'),qb=new THREE.Quaternion(),ax=new THREE.Vector3(1,0,0);
     let hipY=(opts.height||1.5)*0.5;if(hipBone){g.updateMatrixWorld(true);hipY=hipBone.getWorldPosition(new THREE.Vector3()).y;}
-    mixer.addEventListener('finished',e=>{if(e.action===one){one=null;if(cur){cur.reset();cur.play();e.action.crossFadeTo(cur,0.3,false);}}});
+    mixer.addEventListener('finished',e=>{if(e.action===dying)return;if(e.action===one){one=null;if(cur){cur.reset();cur.play();e.action.crossFadeTo(cur,0.3,false);}}});
     const a={g:g,body:body,mixer:mixer,height:opts.height||1.5,
       has:kind=>kind==='sit'?(realSit||legs.length===4):!!act(kind),
       /* how far to raise or lower the body so it sits on a seat of the given height */
@@ -189,7 +192,7 @@ window.GFX=(function(){
       state(kind,fade){
         if(kind===curKind)return;let n=act(kind),k2=kind;
         while(!n&&FALL[k2]){k2=FALL[k2];n=act(k2);}
-        curKind=kind;if(one){one.stop();one=null;}if(!n||n===cur)return;
+        curKind=kind;if(one){one.stop();one=null;}if(dying){dying.stop();dying=null;if(n)cur=null;}if(!n||n===cur)return;
         n.reset();n.enabled=true;n.setEffectiveWeight(1);n.play();
         if(cur)cur.crossFadeTo(n,fade===undefined?0.25:fade,false);cur=n;
       },
@@ -199,6 +202,9 @@ window.GFX=(function(){
         if(!n||n===cur)return false;n.setLoop(THREE.LoopOnce,1);n.clampWhenFinished=false;n.reset();n.enabled=true;n.setEffectiveWeight(1);n.timeScale=1;n.play();
         if(cur)cur.crossFadeTo(n,0.2,false);one=n;return true;
       },
+      /* plays the death animation once and holds the last frame; the next state() call brings it back to life */
+      die(){const c=pickClip(clips,'Death');if(!c)return false;const n=mixer.clipAction(c);n.setLoop(THREE.LoopOnce,1);n.clampWhenFinished=true;n.reset();n.timeScale=1;n.play();
+        if(cur)cur.crossFadeTo(n,0.15,false);if(one){one.stop();one=null;}dying=n;cur=null;curKind='dead';return true;},
       speed(x){if(cur)cur.timeScale=x;},
       update(dt){mixer.update(dt);
         if(curKind==='sit'&&!realSit)legs.forEach(q=>{qb.setFromAxisAngle(ax,q[1]);q[0].quaternion.multiply(qb);});},

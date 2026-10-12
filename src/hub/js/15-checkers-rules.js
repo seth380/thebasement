@@ -95,6 +95,7 @@ function animate(dt,t){
     const a=t*f.sp+f.ph,vx=Math.cos(a);
     f.g.position.set(f.cx+Math.sin(a)*f.amp,(f.cy+Math.sin(a*0.9+f.ph)*0.05)*(1-f.up)+(f.top-Math.abs(Math.sin(a*3))*0.04)*f.up,f.cz+Math.sin(a*1.7+f.ph*2)*0.1);
     f.face+=((vx>0?0:Math.PI)-f.face)*Math.min(1,dt*5);f.g.rotation.y=f.face;f.tail.rotation.y=Math.sin(t*9+f.ph)*0.5;
+    if(f.actor){f.actor.state(feedT>0?'Swimming_Fast':'Swimming_Normal');f.actor.update(dt);}
   });
   bubbles.forEach(b=>{b.p=(b.p+dt*0.45)%1;b.m.position.set(b.x+Math.sin(b.p*20)*0.01,b.y0+b.p*b.h,b.z);});
   weeds.forEach(w=>{w.g.rotation.z=Math.sin(t*1.3+w.p)*0.14;});
