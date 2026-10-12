@@ -1,7 +1,6 @@
 /* ---------- the secret: a bookcase, a stairwell and a waterfall cave ---------- */
 const SZ0=-7.2,SZ1=-5.8,CAVE={x:-24.5,z:-6.5,r:6.3,y:-3};
 const sec={open:!!store.getItem('secret-open'),chest:!!store.getItem('secret-chest'),piv:null,col:null,lid:null,fall:null,mist:[],cx:CAVE.x+2.6,cz:CAVE.z-3.9,gold:null};
-if(sec.chest)HATS.push('Explorer hat');
 function floorY(x){return x>-11?0:-3*Math.min(1,(-11-x)/6);}
 {
   const wal=S(0x5c3d28,0.5,0,{map:woodTex}),rockT=mk(256,256,(g,w,h)=>{g.fillStyle='#5a6258';g.fillRect(0,0,w,h);for(let i=0;i<240;i++){g.fillStyle='rgba('+(rnd()<0.45?'40,90,50':rnd()<0.5?'20,22,20':'150,150,140')+','+rnd()*0.2+')';g.beginPath();g.ellipse(rnd()*w,rnd()*h,4+rnd()*26,3+rnd()*14,rnd()*3,0,7);g.fill();}noise(g,w,h,30);},true);
@@ -61,7 +60,7 @@ function floorY(x){return x>-11?0:-3*Math.min(1,(-11-x)/6);}
   for(let i=0;i<26;i++){const c=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,0.012,10),gold);c.position.set((rnd()-0.5)*0.7,rnd()*0.08,(rnd()-0.5)*0.42);c.rotation.set(rnd()*1.2,rnd()*3,rnd()*1.2);sec.gold.add(c);}
   const gs=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTex,color:0xffd060,transparent:true,opacity:0.8,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));gs.scale.set(2.2,2.2,1);gs.position.y=0.25;sec.gold.add(gs);
   sec.gold.visible=sec.chest;if(sec.chest)lid.rotation.x=-1.9;
-  things.push({x:cx,z:cz+0.6,r:1.6,text:()=>sec.chest?'The chest is open':'Open the old chest',fn:()=>{if(sec.chest){toast('Gold coins, and room for more secrets');return;}SFX.play('open',{rate:0.7});for(let i=0;i<5;i++)SFX.play('coin',{delay:0.35+i*0.13,rate:0.9+i*0.06});SFX.play('win',{delay:1.1});sec.chest=true;store.setItem('secret-chest','1');HATS.push('Explorer hat');toast('Gold, and an explorer’s hat. It is in your wardrobe now.');}});
+  things.push({x:cx,z:cz+0.6,r:1.6,text:()=>sec.chest?'The chest is open':'Open the old chest',fn:()=>{if(sec.chest){toast('Gold coins, and room for more secrets');return;}SFX.play('open',{rate:0.7});for(let i=0;i<5;i++)SFX.play('coin',{delay:0.35+i*0.13,rate:0.9+i*0.06});SFX.play('win',{delay:1.1});sec.chest=true;store.setItem('secret-chest','1');setTimeout(()=>addCoins(PAY.chest,'Treasure!'),3200);toast('Gold, and an explorer’s hat. It is in your wardrobe now.');}});
 }
 function secTick(dt,t){
   const p=sec.piv;p.rotation.y+=((sec.open?1.7:0)-p.rotation.y)*Math.min(1,dt*1.6);

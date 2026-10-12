@@ -770,6 +770,7 @@ function startMatch(){
   state='play';if(mode==='team')msg('SOAK THE ORANGE TEAM','First to '+TARGET+' wins');else msg('MUDWALKERS','Wash them clean before they reach you');
   if(!coarse)lock();
 }
+const pay=(n,why)=>{try{if(typeof api!=='undefined'&&api&&api.coins)api.coins(n,why);}catch(e){}};
 function endMatch(){
   if(state!=='play')return;state='over';if(document.exitPointerLock&&locked)document.exitPointerLock();
   let rows;
@@ -782,6 +783,7 @@ function endMatch(){
     rows=soldiers.slice().sort((a,b)=>b.soaks-a.soaks).map(s=>'<tr class="'+(s.team?'o':'b')+(s.isPlayer?' me':'')+'"><td>'+s.name+'</td><td>'+s.soaks+'</td><td>'+s.outs+'</td><td>'+s.soaks*100+'</td></tr>').join('');
     $('board').innerHTML='<tr><th>Player</th><th>Soaks</th><th>Soaked</th><th>Score</th></tr>'+rows;
     $('rrec').textContent='Your best match: '+best.soaks+' soaks';
+    pay(3*P.soaks+(win?Math.round(40*(1+diff*0.5)):tie?15:5),win?'Victory':'Match played');
   }else{
     if(!best.wave||wave>best.wave)best.wave=wave;
     $('rtag').textContent=MAPS[mapId].name+'  ·  '+DIFFS[diff].n+'  ·  Mudwalkers';
@@ -789,6 +791,7 @@ function endMatch(){
     rows=soldiers.filter(s=>s.team===0).sort((a,b)=>b.soaks-a.soaks).map(s=>'<tr class="b'+(s.isPlayer?' me':'')+'"><td>'+s.name+'</td><td>'+s.soaks+'</td><td>'+s.outs+'</td><td>'+s.soaks*50+'</td></tr>').join('');
     $('board').innerHTML='<tr><th>Player</th><th>Cleaned</th><th>Mudded</th><th>Score</th></tr>'+rows;
     $('rrec').textContent='Best run: wave '+best.wave;
+    pay(2*P.soaks+10*Math.max(0,wave-1),'Mudwalkers wave '+wave);
   }
   try{localStorage.setItem('mwf-best',JSON.stringify(best));}catch(e){}
   $('hud').hidden=true;$('pause').hidden=true;$('results').hidden=false;

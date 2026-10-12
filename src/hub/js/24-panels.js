@@ -13,7 +13,7 @@ function charPicker(){
   const el=$('h-species');el.innerHTML='';
   const groups=[{key:'classic',name:'Classic',items:SPECIES.map((s,i)=>({name:s.name,on:!av.model&&av.species===i,pick:()=>{av.species=i;av.model='';}}))}];
   MODEL_CHARS.forEach(m=>{const k=m.group||'';let g=groups.find(q=>q.key===k);if(!g){g={key:k,name:GROUP_NAMES[k]||k.replace(/[-_]/g,' ').replace(/^./,c=>c.toUpperCase()),items:[]};groups.push(g);}
-    g.items.push({name:m.name,on:av.model===m.id,pick:()=>{av.model=m.id;}});});
+    g.items.push({name:m.name,on:av.model===m.id,price:charOwned(m)?0:charPrice(m),pick:()=>{if(!charOwned(m)){closeCustom();openShop('chars');return false;}av.model=m.id;}});});
   const ORDER=['classic','modular-men','monsters','animals'];groups.sort((a,b)=>(ORDER.indexOf(a.key)+1||99)-(ORDER.indexOf(b.key)+1||99));
   if(!charTab)charTab=(groups.find(g=>g.items.some(i=>i.on))||groups[0]).key;
   if(groups.length>1){
@@ -23,8 +23,9 @@ function charPicker(){
     el.appendChild(tabs);}
   const box=document.createElement('div');box.className='h-opts';el.appendChild(box);
   const g=groups.find(q=>q.key===charTab)||groups[0];
-  g.items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.textContent=it.name;b.setAttribute('aria-pressed',it.on);
-    b.addEventListener('click',()=>{it.pick();store.setItem('hub-avatar',JSON.stringify(av));buildAvatar();charPicker();});box.appendChild(b);});
+  g.items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.textContent=it.price?'🔒 '+it.name+' · '+it.price:it.name;b.setAttribute('aria-pressed',it.on);
+    if(it.price)b.style.opacity='0.7';
+    b.addEventListener('click',()=>{if(it.pick()===false)return;store.setItem('hub-avatar',JSON.stringify(av));buildAvatar();charPicker();});box.appendChild(b);});
 }
 function openCustom(first){
   if(mode==='sit')stand();
@@ -32,8 +33,10 @@ function openCustom(first){
   $('h-c-title').textContent=first?'Make your character':'Your character';$('h-c-done').textContent=first?'Enter the basement':'Done';
   $('h-name').value=av.name;
   charPicker();
-  fill('h-colors',COLORS,COLORS.indexOf(av.color),i=>av.color=COLORS[i],true);
-  fill('h-hats',HATS,av.hat,i=>av.hat=i);
+  const cols=COLORS.concat(SHOP_COLORS.filter(c=>owns('col-'+c.n.toLowerCase())).map(c=>c.c));
+  fill('h-colors',cols,cols.indexOf(av.color),i=>av.color=cols[i],true);
+  const hats=HAT_DEFS.map((h,i)=>i).filter(hatOwned);
+  fill('h-hats',hats.map(i=>HAT_DEFS[i].n).concat(['More in the shop']),hats.indexOf(av.hat),i=>{if(i>=hats.length){closeCustom();openShop('hats');return;}av.hat=hats[i];});
 }
 function closeCustom(){store.setItem('hub-avatar',JSON.stringify(av));$('h-custom').hidden=true;$('h-btns').hidden=false;mode='walk';}
 $('h-name').addEventListener('input',e=>{av.name=e.target.value.trim().slice(0,12);buildAvatar();});

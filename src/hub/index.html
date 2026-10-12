@@ -34,6 +34,18 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
 .h-panel input{width:100%;box-sizing:border-box;font:700 16px var(--body);color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:10px;padding:8px 10px}
 .h-opts{display:flex;gap:8px;flex-wrap:wrap}
 .h-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;border-bottom:2px solid var(--ink)}
+#h-tag #h-coinbox{display:inline-block;margin-left:10px;font-weight:900;font-variant-numeric:tabular-nums}
+#h-coinbox.h-bump{animation:hbump .5s ease}
+@keyframes hbump{30%{transform:scale(1.35)}}
+.h-bal{font:900 18px var(--body);font-variant-numeric:tabular-nums}
+#h-shop-list{display:flex;flex-direction:column;gap:6px;max-height:min(52vh,420px);overflow:auto}
+.h-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:2px solid transparent;border-radius:12px}
+.h-item.h-on{border-color:var(--ink);background:rgba(255,201,40,.25)}
+.h-item i{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--ink)}
+.h-item div{flex:1;min-width:0}.h-item b{display:block}.h-item small{display:block;font-size:12px;opacity:.75}
+.h-buy{flex:none;font:900 13px var(--body);color:var(--ink);background:var(--cream);border:2px solid var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer;font-variant-numeric:tabular-nums}
+.h-buy.h-sure{background:var(--sun)}.h-buy:disabled{opacity:.6;cursor:default}
+.h-empty{margin:0;opacity:.7}
 .h-tabs button{font:900 12px var(--body);color:var(--ink);background:none;border:2px solid transparent;border-bottom:none;border-radius:10px 10px 0 0;padding:5px 10px;margin-bottom:-2px;cursor:pointer;opacity:.7}
 .h-tabs button[aria-selected="true"]{border-color:var(--ink);background:var(--cream);opacity:1}
 .h-opts button{font:900 13px var(--body);color:var(--ink);background:none;border:3px solid transparent;border-radius:12px;padding:6px 10px;cursor:pointer}
@@ -82,10 +94,11 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
 <div id="h-wrap">
   <canvas id="h-view"></canvas>
   <div id="h-ui">
-    <div id="h-tag" class="h-sticker"><b>Basement Arcade</b><span id="h-count">Trophies 0/15</span><span id="h-time"></span></div>
+    <div id="h-tag" class="h-sticker"><b>Basement Arcade</b><span id="h-count">Trophies 0/15</span><span id="h-time"></span><span id="h-coinbox" title="Coins">🪙 <span id="h-coins">0</span></span></div>
     <div id="h-btns">
       <button class="h-pill" id="h-b-look" type="button">Change look</button>
       <button class="h-pill" id="h-b-troph" type="button">Trophies</button>
+      <button class="h-pill" id="h-b-shop" type="button">Shop</button>
       <button class="h-pill" id="h-b-snd" type="button">Sound on</button>
       <button class="h-pill" id="h-b-net" type="button" title="Copy an invite link" hidden></button>
       <div id="h-emotes" hidden></div>
@@ -103,6 +116,16 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
     <div><span class="h-lab">Outfit color</span><div class="h-opts h-sw" id="h-colors"></div></div>
     <div><span class="h-lab">Hat</span><div class="h-opts" id="h-hats"></div></div>
     <button class="h-go" id="h-c-done" type="button">Done</button>
+  </div>
+
+  <div id="h-shop" class="h-over" hidden>
+    <div class="h-card h-sticker h-shopcard">
+      <div class="h-row" style="justify-content:space-between;align-items:baseline"><h2>Shop</h2><span class="h-bal">🪙 <span id="h-shop-bal">0</span></span></div>
+      <small>Earn coins in every cabinet, at the tables, from trophies, and with a bonus each day.</small>
+      <div class="h-tabs" id="h-shop-tabs" role="tablist"></div>
+      <div id="h-shop-list"></div>
+      <button class="h-go" id="h-shop-close" type="button">Close</button>
+    </div>
   </div>
 
   <div id="h-troph" class="h-over" hidden>

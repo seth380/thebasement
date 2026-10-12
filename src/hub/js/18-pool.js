@@ -24,7 +24,7 @@ function plResolve(){
     const cleared=PL.grp[who]&&PL.balls.every(b=>b.in||!b.n||b.n===8||plType(b.n)!==PL.grp[who])&&PL.potted.every(n=>n===8||plType(n)!==PL.grp[who]);
     const win=(cleared&&!PL.scratch)?who:1-who;PL.over=win===0?'You sank the 8. You win!':who===0?'The 8 went down too early. The computer wins.':'The computer wins this one.';
     if(win===0&&who===1)PL.over='The computer sank the 8 too early. You win!';
-    const st=readJ('pool-stats');st[win===0?'w':'l']=(st[win===0?'w':'l']||0)+1;store.setItem('pool-stats',JSON.stringify(st));PL.state='over';plHud();return;
+    if(win===0)addCoins(PAY.tableWin.pool,'Pool win');const st=readJ('pool-stats');st[win===0?'w':'l']=(st[win===0?'w':'l']||0)+1;store.setItem('pool-stats',JSON.stringify(st));PL.state='over';plHud();return;
   }
   const obj=PL.potted.filter(n=>n!==8);
   if(!PL.grp[who]&&obj.length&&!PL.scratch){PL.grp[who]=plType(obj[0]);PL.grp[1-who]=PL.grp[who]==='S'?'T':'S';}
