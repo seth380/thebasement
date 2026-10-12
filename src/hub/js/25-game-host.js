@@ -15,7 +15,7 @@ function openGame(i){
     AudioContext:AC?function(){const a=new AC();acs.push(a);return a;}:undefined};
   store.setItem(m.pick,String(av.species));
   const api={cast:arr=>{if(arr[av.species])arr[av.species].kart=av.color;}};
-  try{window.GAMES[m.id](root,api,win,f=>{if(!g.dead)requestAnimationFrame(f);},store);}catch(e){closeGame();toast('That cabinet would not start');return;}
+  try{window.GAMES[m.id](root,api,win,f=>{if(!g.dead)requestAnimationFrame(t=>{if(!g.dead)f(t);});},store);}catch(e){closeGame();toast('That cabinet would not start');return;}
   root.querySelectorAll('[data-exit]').forEach(b=>b.addEventListener('click',closeGame));
   leave.addEventListener('click',closeGame);
   mode='game';hubAudioQuiet();SFX.play('start');

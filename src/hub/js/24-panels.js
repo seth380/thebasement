@@ -5,14 +5,33 @@ function fill(id,items,cur,cb,sw){
     if(sw){b.style.background='#'+it.toString(16).padStart(6,'0');b.setAttribute('aria-label','Color '+(i+1));}else b.textContent=it;
     b.addEventListener('click',()=>{[].forEach.call(el.children,(c,n)=>c.setAttribute('aria-pressed',n===i));cb(i);store.setItem('hub-avatar',JSON.stringify(av));buildAvatar();});el.appendChild(b);});
 }
+/* the character row: tabs for each group (the classic animals, then each folder of models), one group's choices shown at a time.
+   Picking a classic animal clears the model. The minigames always use your classic animal. */
+const GROUP_NAMES={'':'More','modular-men':'People',monsters:'Monsters',animals:'Animals'};
+let charTab=null;
+function charPicker(){
+  const el=$('h-species');el.innerHTML='';
+  const groups=[{key:'classic',name:'Classic',items:SPECIES.map((s,i)=>({name:s.name,on:!av.model&&av.species===i,pick:()=>{av.species=i;av.model='';}}))}];
+  MODEL_CHARS.forEach(m=>{const k=m.group||'';let g=groups.find(q=>q.key===k);if(!g){g={key:k,name:GROUP_NAMES[k]||k.replace(/[-_]/g,' ').replace(/^./,c=>c.toUpperCase()),items:[]};groups.push(g);}
+    g.items.push({name:m.name,on:av.model===m.id,pick:()=>{av.model=m.id;}});});
+  const ORDER=['classic','modular-men','monsters','animals'];groups.sort((a,b)=>(ORDER.indexOf(a.key)+1||99)-(ORDER.indexOf(b.key)+1||99));
+  if(!charTab)charTab=(groups.find(g=>g.items.some(i=>i.on))||groups[0]).key;
+  if(groups.length>1){
+    const tabs=document.createElement('div');tabs.className='h-tabs';tabs.setAttribute('role','tablist');
+    groups.forEach(g=>{const t=document.createElement('button');t.type='button';t.textContent=g.name;t.setAttribute('role','tab');t.setAttribute('aria-selected',g.key===charTab);
+      t.addEventListener('click',()=>{charTab=g.key;charPicker();});tabs.appendChild(t);});
+    el.appendChild(tabs);}
+  const box=document.createElement('div');box.className='h-opts';el.appendChild(box);
+  const g=groups.find(q=>q.key===charTab)||groups[0];
+  g.items.forEach((it,i)=>{const b=document.createElement('button');b.type='button';b.textContent=it.name;b.setAttribute('aria-pressed',it.on);
+    b.addEventListener('click',()=>{it.pick();store.setItem('hub-avatar',JSON.stringify(av));buildAvatar();charPicker();});box.appendChild(b);});
+}
 function openCustom(first){
   if(mode==='sit')stand();
   mode='custom';$('h-custom').hidden=false;$('h-btns').hidden=true;$('h-prompt').hidden=true;
   $('h-c-title').textContent=first?'Make your character':'Your character';$('h-c-done').textContent=first?'Enter the basement':'Done';
   $('h-name').value=av.name;
-  /* animals first, then any model characters; picking an animal clears the model. Games always use your animal. */
-  const nA=SPECIES.length,mi=MODEL_CHARS.findIndex(m=>m.id===av.model);
-  fill('h-species',SPECIES.map(s=>s.name).concat(MODEL_CHARS.map(m=>m.name)),mi>=0?nA+mi:av.species,i=>{if(i<nA){av.species=i;av.model='';}else av.model=MODEL_CHARS[i-nA].id;});
+  charPicker();
   fill('h-colors',COLORS,COLORS.indexOf(av.color),i=>av.color=COLORS[i],true);
   fill('h-hats',HATS,av.hat,i=>av.hat=i);
 }

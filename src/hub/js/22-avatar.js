@@ -35,7 +35,7 @@ function hatOnModel(a,n,height){
 /* builds a character from a look {name,species,color,hat,model}; used for you, everyone online and the NPCs.
    With a model that has loaded, the result carries .actor (a rigged, animated body); otherwise it is a critter. */
 function makeAvatarModel(look,o){
-  o=o||{};const m=modelFor(look.model),h=o.height||1.5;
+  o=o||{};const m=modelFor(look.model),h=o.height||(m&&m.height)||1.5;
   const a=m?GFX.actor(m.file,{height:h}):null;
   if(a){
     hatOnModel(a,look.hat,h);
@@ -62,7 +62,8 @@ function animateBody(b,dt,move,pose,t,phase){
 }
 /* how high a body sits off the floor: critters perch on the cushion, models with a sit animation need less */
 const SEAT=0.5;
-const sitLift=b=>b.actor?(b.actor.has('sit')?b.actor.sitOffset(SEAT):0.2):0.2;
+/* a model that cannot sit stands on the cushion instead (a dog on the couch) */
+const sitLift=b=>b.actor?(b.actor.has('sit')?b.actor.sitOffset(SEAT):0.42):0.2;
 /* emotes 👋 😂 🎉 👍 make a model wave, laugh (no clip yet, so nothing), dance or nod */
 const EMOTE_ANIM=['wave','','dance','yes'];
 function bodyEmote(b,k){if(b&&b.actor&&EMOTE_ANIM[k])b.actor.once(EMOTE_ANIM[k]);}

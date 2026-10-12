@@ -362,6 +362,44 @@ function makeGunOnArm(arm,team){
   const t=mesh(new THREE.CylinderGeometry(0.06,0.06,0.24,12),new THREE.MeshStandardMaterial({color:0x7fdcff,transparent:true,opacity:0.6,roughness:0.1}),0,-0.56,0.13,g);t.castShadow=false;
   const tip=new THREE.Object3D();tip.position.set(0,-1.1,0.03);g.add(tip);return tip;
 }
+/* ---------- modelled soldiers and Mudwalkers (served page only) ----------
+   Toon Shooter soldiers, uniforms in team colours, carrying only the SMG repainted as a toy water blaster;
+   zombies from the Zombie Apocalypse Kit, caked in mud. Until the files arrive everyone is a critter. */
+const MODEL_SOLDIER=['waterfare/Character_Soldier.glb','waterfare/Character_Enemy.glb'],MODEL_ZOMBIE=['waterfare/Zombie_Basic.glb','waterfare/Zombie_Chubby.glb','waterfare/Zombie_Arm.glb'];
+let modelsReady=false;
+{const all=MODEL_SOLDIER.concat(MODEL_ZOMBIE);let left=all.length;all.forEach(f=>GFX.preload(f,()=>{if(--left===0){modelsReady=true;soldiers.forEach(s=>{if(s.cr&&!s.cr.act)reBody(s);});}}));}
+const TEAM_HEX=[0x2f6fd8,0xe8742a],TOY={Black:0xffc928,DarkGrey:0xffc928,Grey2:0xff7a1a,Grey:0xff7a1a,LightGrey:0x3fc4ff,Wood:0x3fc4ff,DarkWood:0x1f86b8,Red:0xff4d6d},matCache={};
+const srgb=h=>new THREE.Color(h).convertSRGBToLinear();
+function teamMat(m,key,hex){const k=m.uuid+key;if(!matCache[k]){const c=m.clone();c.color.copy(srgb(hex));matCache[k]=c;}return matCache[k];}
+function modelBody(s){
+  if(!modelsReady)return null;
+  const zombie=s.zombie,file=zombie?MODEL_ZOMBIE[s.slot%MODEL_ZOMBIE.length]:MODEL_SOLDIER[s.team];
+  const a=GFX.actor(file,{height:zombie?1.75:1.8});if(!a)return null;
+  let gun=null;
+  /* each gun is a group of parts held in the hand: hide all but the SMG */
+  a.body.traverse(o=>{if(/^(AK|GrenadeLauncher|Knife_1|Knife_2|Pistol|Revolver|Revolver_Small|RocketLauncher|ShortCannon|Shotgun|Shovel|Sniper|Sniper_2)$/.test(o.name))o.visible=false;if(o.name==='SMG')gun=o;});
+  a.body.traverse(o=>{
+    if(!o.isMesh)return;o.castShadow=true;
+    if(zombie){o.material=teamMat(o.material,'mud',0xc9a77a);return;}
+    let inGun=false;for(let q=o;q;q=q.parent)if(q===gun)inGun=true;
+    if(inGun)o.material=teamMat(o.material,'toy',TOY[o.material.name]||0xffc928);
+    else if(/^(Character_Main|Enemy_Red)$/.test(o.material.name))o.material=teamMat(o.material,'t'+s.team,TEAM_HEX[s.team]);
+  });
+  /* the end of the barrel: the gun's point furthest forward, found in the rest pose */
+  a.g.updateMatrixWorld(true);
+  const tip=new THREE.Object3D();
+  if(gun){const b=new THREE.Box3().setFromObject(gun);(gun.parent||gun).add(tip);tip.position.copy(gun.worldToLocal(new THREE.Vector3((b.min.x+b.max.x)/2,(b.min.y+b.max.y)/2+0.03,b.max.z)));if(gun.parent!==gun)gun.add(tip);}
+  else{tip.position.set(0.25,1.25,0.6);a.g.add(tip);}
+  a.state('Idle',0);
+  return {g:a.g,act:a,tip:tip};
+}
+/* swaps a critter for its model, keeping its place, name tag and visibility */
+function reBody(s){
+  const m=modelBody(s);if(!m)return;const old=s.cr.g;
+  m.g.position.copy(old.position);m.g.rotation.y=old.rotation.y;m.g.visible=old.visible;
+  old.children.filter(c=>c.isSprite).forEach(sp=>{sp.position.y=2.05;m.g.add(sp);});
+  scene.remove(old);scene.add(m.g);s.cr=m;if(!s.zombie)s.tip=m.tip;
+}
 function buildSoldiers(){
   soldiers.forEach(s=>{if(s.cr)scene.remove(s.cr.g);});soldiers.length=0;
   const mates=CAST.map((c,i)=>i).filter(i=>i!==playerKind),mud=mode==='mud',n1=mud?12:4;
@@ -382,7 +420,7 @@ function buildSoldiers(){
         if(t===0){const c=document.createElement('canvas');c.width=256;c.height=64;const g=c.getContext('2d');g.font='bold 40px sans-serif';g.textAlign='center';g.textBaseline='middle';g.lineWidth=6;g.strokeStyle='#0d171d';g.strokeText(s.name,128,32);g.fillStyle='#7fb4ff';g.fillText(s.name,128,32);
           const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(0.9,0.225,1);sp.position.y=1.75;cr.g.add(sp);}
       }
-      scene.add(cr.g);s.cr=cr;
+      scene.add(cr.g);s.cr=cr;if(modelsReady)reBody(s);
     }
     soldiers.push(s);
   }
@@ -394,12 +432,12 @@ function spawn(s){
     if(!c.length)c=NODES.filter((n,i)=>n.ok&&ADJ[i].length&&blue.every(o=>Math.hypot(o.x-n.x,o.z-n.z)>9));
     const n=c[Math.floor(Math.random()*c.length)]||NODES.find(q=>q.ok);
     s.x=n.x;s.z=n.z;s.hp=(52+wave*9)*[0.8,1,1.25][diff];s.zspd=(1.7+Math.min(1.7,wave*0.14)+Math.random()*0.6)*[0.9,1,1.12][diff];
-    s.alive=true;s.protect=0;s.path=[];s.target=null;s.cool=0.6;s.cr.g.visible=true;s.cr.g.position.set(s.x,0,s.z);return;
+    s.alive=true;s.protect=0;s.path=[];s.target=null;s.cool=0.6;s.hideT=0;s.cr.g.visible=true;s.cr.g.position.set(s.x,0,s.z);if(s.cr.act)s.cr.act.state('Idle',0);return;
   }
   const pts=SPAWN[s.team];let best=pts[s.slot%4],bd=-1;
   pts.forEach(p=>{let m=1e9;soldiers.forEach(o=>{if(o.team!==s.team&&o.alive)m=Math.min(m,Math.hypot(o.x-p[0],o.z-p[1]));if(o!==s&&o.team===s.team&&o.alive&&Math.hypot(o.x-p[0],o.z-p[1])<1)m=0;});if(m>bd){bd=m;best=p;}});
   s.x=best[0];s.z=best[1];s.h=s.team?-Math.PI/2:Math.PI/2;s.hp=100;s.alive=true;s.protect=1.8;s.mag=30;s.balloons=s.isPlayer?2:1;s.path=[];s.target=null;s.hurtBy=null;
-  if(s.cr){s.cr.g.visible=true;s.cr.g.position.set(s.x,0,s.z);}
+  if(s.cr){s.hideT=0;s.cr.g.visible=true;s.cr.g.position.set(s.x,0,s.z);if(s.cr.act)s.cr.act.state('Idle',0);}
   if(s.isPlayer){yaw=s.team?Math.PI/2:-Math.PI/2;pitch=0;ammo[0]=WEAPONS[0].mag;ammo[1]=WEAPONS[1].mag;reloadT=0;$('dead').hidden=true;}
 }
 
@@ -458,9 +496,9 @@ function damage(s,by,amt,head,balloon){
   s.hp-=amt;s.lastHurt=time;s.hurtBy=by;
   if(s.isPlayer){snd('hurt');kick+=0.4;}
   if(by.isPlayer){hitT=0.18;$('hit').style.opacity=1;snd('hit');}
-  if(s.hp>0)return;
+  if(s.hp>0){if(s.cr&&s.cr.act&&!s.isPlayer&&Math.random()<0.35)s.cr.act.once('HitReact');return;}
   s.alive=false;s.respawnT=3.2;s.outs++;if(!by.zombie)by.soaks++;
-  splash(s.x,1.1,s.z,34,6);if(s.cr)s.cr.g.visible=false;
+  splash(s.x,1.1,s.z,34,6);if(s.cr){if(s.cr.act&&s.cr.act.die())s.hideT=1.5;else s.cr.g.visible=false;}
   if(mode==='team'){score[by.team]++;feed(by,s,balloon?'ballooned':head?'face-splashed':'soaked');}
   else if(s.zombie){cleaned++;if(by.isPlayer||Math.random()<0.4)feed(by,s,'cleaned up a');}
   else feed(by,s,'mudded');
@@ -491,14 +529,16 @@ function zombieUpdate(b,dt){
     want=Math.atan2(dx,dz);
     if(dT>1.05){mvx=dx/d*b.zspd;mvz=dz/d*b.zspd;}
     b.cool-=dt;
-    if(dT<1.45&&b.cool<=0){b.cool=0.95;damage(T,b,[14,19,24][diff],false,false);splash(T.x,1.1,T.z,6,2);}
+    if(dT<1.45&&b.cool<=0){b.cool=0.95;if(b.cr.act)b.cr.act.once('Punch');damage(T,b,[14,19,24][diff],false,false);splash(T.x,1.1,T.z,6,2);}
   }
   b.x+=mvx*dt;b.z+=mvz*dt;
   soldiers.forEach(o=>{if(o===b||!o.alive)return;const dx=b.x-o.x,dz=b.z-o.z,d=Math.hypot(dx,dz);if(d<0.85&&d>0.01){b.x+=dx/d*(0.85-d)*0.5;b.z+=dz/d*(0.85-d)*0.5;}});
   collide(b);
   b.h+=clamp(Math.atan2(Math.sin(want-b.h),Math.cos(want-b.h)),-5*dt,5*dt);
   b.spd=Math.hypot(mvx,mvz);b.walk+=dt*b.spd*2.4;
-  const c=b.cr;c.g.position.set(b.x,Math.abs(Math.sin(b.walk))*0.05,b.z);c.g.rotation.y=b.h;c.g.rotation.z=Math.sin(b.walk)*0.06;
+  const c=b.cr;
+  if(c.act){c.g.position.set(b.x,0,b.z);c.g.rotation.y=b.h;c.act.state(b.spd<0.2?'Idle':b.zspd>2.6?'Run_Arms':'Walk');c.act.speed(b.spd<0.2?1:clamp(b.spd/(b.zspd>2.6?3.4:1.6),0.6,1.5));c.act.update(dt);return;}
+  c.g.position.set(b.x,Math.abs(Math.sin(b.walk))*0.05,b.z);c.g.rotation.y=b.h;c.g.rotation.z=Math.sin(b.walk)*0.06;
   const sw=Math.sin(b.walk)*0.5;c.legs[0].rotation.x=sw;c.legs[1].rotation.x=-sw;c.arms[0].rotation.x=-1.45+Math.sin(b.walk*0.5+b.phase)*0.15;
 }
 /* aim help for touch screens: slows and pulls the view near a rival, and can fire for you */
@@ -620,7 +660,10 @@ function botUpdate(b,dt){
   collide(b);
   let dh=Math.atan2(Math.sin(want-b.h),Math.cos(want-b.h));b.h+=clamp(dh,-7*dt,7*dt);
   b.spd=Math.hypot(mvx,mvz);b.walk+=dt*b.spd*2.6;
-  const c=b.cr;c.g.position.set(b.x,Math.abs(Math.sin(b.walk))*0.04,b.z);c.g.rotation.y=b.h;
+  const c=b.cr;
+  if(c.act){const shooting=time-b.lastFire<0.35;c.g.position.set(b.x,0,b.z);c.g.rotation.y=b.h;
+    c.act.state(b.spd>0.6?(shooting?'Run_Shoot':'Run_Gun'):(shooting?'Idle_Shoot':'Idle'));c.act.speed(b.spd>0.6?clamp(b.spd/4.3,0.6,1.3):1);c.act.update(dt);return;}
+  c.g.position.set(b.x,Math.abs(Math.sin(b.walk))*0.04,b.z);c.g.rotation.y=b.h;
   const sw=Math.sin(b.walk)*0.7*Math.min(1,b.spd/3);c.legs[0].rotation.x=sw;c.legs[1].rotation.x=-sw;
 }
 
@@ -658,7 +701,8 @@ function frame(now){
     }else{deadT=P.respawnT;}
     soldiers.forEach(s=>{
       if(s.protect>0)s.protect-=dt;
-      if(!s.alive){if(mode==='team'){s.respawnT-=dt;if(s.respawnT<=0)spawn(s);}return;}
+      if(!s.alive){if(s.hideT>0&&s.cr){s.hideT-=dt;s.cr.act.update(dt);if(s.hideT<=0)s.cr.g.visible=false;}
+        if(mode==='team'){s.respawnT-=dt;if(s.respawnT<=0)spawn(s);}return;}
       if(!s.isPlayer){botUpdate(s,dt);if(time-s.lastHurt>4&&s.hp<100)s.hp=Math.min(100,s.hp+26*dt);}
     });
     balloons.forEach(b=>{if(!b.on)return;b.vy-=14*dt;b.x+=b.vx*dt;b.y+=b.vy*dt;b.z+=b.vz*dt;b.m.position.set(b.x,b.y,b.z);

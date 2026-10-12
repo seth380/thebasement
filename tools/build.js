@@ -39,7 +39,9 @@ hub=must(hub,'<!--HUB_SCRIPT-->',"<script>\n(function(){\n'use strict';\n"+hubJs
 fs.mkdirSync(dist,{recursive:true});
 fs.writeFileSync(path.join(dist,'basement-arcade.html'),hub);
 /* character models: every .glb/.gltf under assets/models/characters and assets/models/npcs is picked up automatically.
-   An optional names.json in either folder maps a file name to a display name, e.g. {"Casual_Male.gltf":"Sam"} */
+   An optional names.json in either folder maps a file name to a display name, e.g. {"Casual_Male.gltf":"Sam"},
+   or to {"name":"Fox","height":0.8} to set the height too (people default to 1.5 m).
+   The first subfolder becomes the group shown in the character picker (people, monsters, animals...). */
 function findModels(sub){
   const dir=path.join(root,'assets/models',sub),out=[];if(!fs.existsSync(dir))return out;
   let names={};try{names=JSON.parse(fs.readFileSync(path.join(dir,'names.json'),'utf8'));}catch(e){}
@@ -48,7 +50,10 @@ function findModels(sub){
     if(!/\.(glb|gltf)$/i.test(e.name))return;
     const rel=path.relative(path.join(root,'assets/models'),p).split(path.sep).join('/'),stem=e.name.replace(/\.(glb|gltf)$/i,'');
     const nice=stem.replace(/([a-z])([A-Z])/g,'$1 $2').split(/[-_ ]+/).filter(w=>w&&!/^(character|characters|kenney|quaternius|model|rigged|animated|\d+)$/i.test(w)).map(w=>w[0].toUpperCase()+w.slice(1).toLowerCase()).join(' ')||stem;
-    out.push({id:rel.replace(/\.(glb|gltf)$/i,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40),name:names[e.name]||nice,file:rel});
+    const meta=typeof names[e.name]==='object'?names[e.name]:{name:names[e.name]};
+    const sub1=path.relative(dir,p).split(path.sep);
+    const item={id:rel.replace(/\.(glb|gltf)$/i,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40),name:meta.name||nice,file:rel,group:sub1.length>1?sub1[0]:''};
+    if(meta.height)item.height=meta.height;out.push(item);
   });
   walk(dir);return out;
 }

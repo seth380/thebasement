@@ -1,1 +1,18 @@
-{"Casual_2.glb":"Casual","Casual_Hoodie.glb":"Hoodie","Spacesuit.glb":"Astronaut","Swat.glb":"SWAT"}
+{
+  "Casual_2.glb": "Casual", "Casual_Hoodie.glb": "Hoodie", "Spacesuit.glb": "Astronaut", "Swat.glb": "SWAT",
+
+  "Alien.glb": {"name": "Alien", "height": 1.25}, "Alien_Tall.glb": {"name": "Tall Alien", "height": 1.6},
+  "Cactus.glb": {"name": "Cactus", "height": 1.3}, "Chicken.glb": {"name": "Chicken", "height": 1.0},
+  "Crab.glb": {"name": "Crab", "height": 0.9}, "Cyclops.glb": {"name": "Cyclops", "height": 1.4},
+  "Deer.glb": {"name": "Deer", "height": 1.35}, "Demon.glb": {"name": "Demon", "height": 1.4},
+  "Ghost.glb": {"name": "Ghost", "height": 1.3}, "GreenDemon.glb": {"name": "Green Demon", "height": 1.4},
+  "Mushroom.glb": {"name": "Mushroom", "height": 1.1}, "Panda.glb": {"name": "Panda", "height": 1.3},
+  "Penguin.glb": {"name": "Penguin", "height": 1.1}, "Pig.glb": {"name": "Pig", "height": 1.15},
+  "Skull.glb": {"name": "Skull", "height": 1.3}, "Tree.glb": {"name": "Tree", "height": 1.6},
+  "Yeti.glb": {"name": "Yeti", "height": 1.75},
+
+  "Fox.glb": {"name": "Fox", "height": 0.8}, "Wolf.glb": {"name": "Wolf", "height": 1.0},
+  "Husky.glb": {"name": "Husky", "height": 0.95}, "ShibaInu.glb": {"name": "Shiba", "height": 0.8},
+  "Alpaca.glb": {"name": "Alpaca", "height": 1.7}, "Horse.glb": {"name": "Horse", "height": 1.9},
+  "Cow.glb": {"name": "Cow", "height": 1.6}, "Stag.glb": {"name": "Stag", "height": 1.9}
+}

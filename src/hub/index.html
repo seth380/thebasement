@@ -33,6 +33,9 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
 .h-panel label,.h-lab{font-size:13px;display:block;margin-bottom:5px}
 .h-panel input{width:100%;box-sizing:border-box;font:700 16px var(--body);color:var(--ink);background:#fff;border:2px solid var(--ink);border-radius:10px;padding:8px 10px}
 .h-opts{display:flex;gap:8px;flex-wrap:wrap}
+.h-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;border-bottom:2px solid var(--ink)}
+.h-tabs button{font:900 12px var(--body);color:var(--ink);background:none;border:2px solid transparent;border-bottom:none;border-radius:10px 10px 0 0;padding:5px 10px;margin-bottom:-2px;cursor:pointer;opacity:.7}
+.h-tabs button[aria-selected="true"]{border-color:var(--ink);background:var(--cream);opacity:1}
 .h-opts button{font:900 13px var(--body);color:var(--ink);background:none;border:3px solid transparent;border-radius:12px;padding:6px 10px;cursor:pointer}
 .h-opts button[aria-pressed="true"]{border-color:var(--ink);background:var(--sun)}
 .h-opts.h-sw button{width:36px;height:36px;padding:0;border-radius:50%;border:3px solid var(--cream);box-shadow:0 0 0 2px var(--ink)}
@@ -96,7 +99,7 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
   <div id="h-custom" class="h-panel h-sticker" hidden>
     <h2 id="h-c-title">Your character</h2>
     <div><label for="h-name">Name</label><input id="h-name" maxlength="12" autocomplete="off" placeholder="Player 1"></div>
-    <div><span class="h-lab">Character</span><div class="h-opts" id="h-species"></div></div>
+    <div><span class="h-lab">Character</span><div id="h-species"></div></div>
     <div><span class="h-lab">Outfit color</span><div class="h-opts h-sw" id="h-colors"></div></div>
     <div><span class="h-lab">Hat</span><div class="h-opts" id="h-hats"></div></div>
     <button class="h-go" id="h-c-done" type="button">Done</button>
