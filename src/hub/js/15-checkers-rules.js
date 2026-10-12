@@ -59,7 +59,7 @@ function ckRender(){
   ckSync(v);
 }
 function ckNew(){ck.b=ckInit();ck.turn=1;ck.legal=ckMoves(ck.b,1);ck.sel=-1;ck.prefix=[];ck.last=[];ck.over='';ck.noCap=0;ckRender();}
-function ckEnd(r){SFX.play(r==='w'?'win':r==='l'?'error':'bong',{delay:0.25});ck.over=r==='w'?'You win!':r==='l'?'The computer wins this one.':'Draw.';ck.turn=0;const st=readJ('chk-stats');st[r]=(st[r]||0)+1;store.setItem('chk-stats',JSON.stringify(st));}
+function ckEnd(r){if(r==='w')addCoins(PAY.tableWin.chk,'Checkers win');else if(r==='d')addCoins(PAY.tableDraw,'Checkers draw');SFX.play(r==='w'?'win':r==='l'?'error':'bong',{delay:0.25});ck.over=r==='w'?'You win!':r==='l'?'The computer wins this one.':'Draw.';ck.turn=0;const st=readJ('chk-stats');st[r]=(st[r]||0)+1;store.setItem('chk-stats',JSON.stringify(st));}
 function ckCommit(m,s){
   SFX.play(m.caps.length?'remove':'place');
   ck.b=ckApply(ck.b,m);ck.last=[m.from].concat(m.path);ck.noCap=m.caps.length?0:ck.noCap+1;ck.sel=-1;ck.prefix=[];
@@ -83,7 +83,7 @@ function openChk(){SFX.play('open');if(!ck.b)ckNew();$('h-chk').hidden=false;ckR
 $('h-chk-new').addEventListener('click',ckNew);
 $('h-chk-leave').addEventListener('click',()=>closeOvers());
 ckSync(ckInit());
-const OVERS=['h-troph','h-chk','h-chess','h-foos','h-pool'];
+const OVERS=['h-troph','h-chk','h-chess','h-foos','h-pool','h-shop'];
 const modal=()=>OVERS.some(id=>!$(id).hidden);
 function closeOvers(){if(modal())SFX.play('close');OVERS.forEach(id=>{$(id).hidden=true;});FB.on=false;PL.on=false;}
 

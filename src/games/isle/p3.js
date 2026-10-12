@@ -1,7 +1,10 @@
 /* ---------- saved progress ---------- */
 let F={power:false,pillars:false,dirs:[6,2,4,7],dials:[1,3,0],vals:[5,25,15],crystal:false,lens:false,key:false,door:false,beacon:false,notes:[]};
 function loadSave(){try{const s=JSON.parse(localStorage.getItem('isle-save'));if(s&&s.dirs)F=Object.assign(F,s);}catch(e){}}
-function save(){try{localStorage.setItem('isle-save',JSON.stringify(F));}catch(e){}}
+function save(){try{localStorage.setItem('isle-save',JSON.stringify(F));}catch(e){}
+  /* coins for each mechanism solved the first time */
+  try{const solved=[F.power,F.pillars,F.crystal||F.lens,F.vault,F.beacon].filter(Boolean).length,paid=+localStorage.getItem('isle-paid')||0;
+    if(solved>paid){localStorage.setItem('isle-paid',String(solved));if(typeof api!=='undefined'&&api&&api.coins)api.coins(40*(solved-paid),'Isle puzzle solved');}}catch(e){}}
 loadSave();
 
 /* ---------- signs: six symbols and four animals, drawn once and reused in the world and in panels ---------- */

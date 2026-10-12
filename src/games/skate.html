@@ -556,12 +556,14 @@ function frame(now){
 
 /* ---------- flow ---------- */
 function setMedals(el,s){[].forEach.call(el.children,(c,i)=>c.classList.toggle('got',s>=MEDALS[i]));}
+const pay=(n,why)=>{try{if(typeof api!=='undefined'&&api&&api.coins)api.coins(n,why);}catch(e){}};
 function finish(){
   state='done';combo={tricks:[],base:0};$('ctricks').textContent='';
   const rec=!best.lv[lv.id]||score>best.lv[lv.id];
   if(rec)best.lv[lv.id]=score;if(!best.score||score>best.score)best.score=score;if(!best.combo||bestCombo>best.combo)best.combo=bestCombo;
   try{localStorage.setItem('ssp-best',JSON.stringify(best));}catch(e){}
   let m=-1;MEDALS.forEach((v,i)=>{if(score>=v)m=i;});
+  pay(Math.min(200,Math.round(score/80))+(m>=0?[10,25,50][m]:0),'Skate run');
   $('rtitle').textContent=m>=0?MNAMES[m]+' medal!':'Time!';
   $('total').textContent=num(score);$('rec').hidden=!(rec&&score>0);
   setMedals($('rmedals'),score);

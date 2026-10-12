@@ -465,6 +465,7 @@ function crossed(k){
   if(k.lap>ev.laps&&!k.finished){k.finished=++finishCount;if(k.isPlayer)finishPlayer();return;}
   if(k.isPlayer&&k.lap>1){lapTimes.push(raceT-lapStart);lapStart=raceT;SFX.play('confirm',{game:true});toast(k.lap===ev.laps?'Final lap!':'Lap '+k.lap+'  ·  '+fmt(lapTimes[lapTimes.length-1]));beep(660,0.15);}
 }
+const pay=(n,why)=>{try{if(typeof api!=='undefined'&&api&&api.coins)api.coins(n,why);}catch(e){}};
 function finishPlayer(){
   lapTimes.push(raceT-lapStart);
   const k=player,i=k.idx;
@@ -476,6 +477,8 @@ function finishPlayer(){
   if(!b.lap||bl<b.lap)b.lap=bl;
   b.place=Math.min(b.place||9,k.finished);
   try{localStorage.setItem('tmk-best',JSON.stringify(best));}catch(e){}
+  /* coins: for finishing, more for placing, a little extra for a new record */
+  pay(20+[40,25,15,5][Math.min(3,k.finished-1)]+(isRec?15:0),ORD[k.finished-1]+' place');
   $('place').textContent=ORD[k.finished-1]+' place'+(k.finished===1?'!':'');
   $('rname').textContent=ev.name+'  ·  '+ev.label;
   $('total').textContent=fmt(tot);$('rec').hidden=!isRec;

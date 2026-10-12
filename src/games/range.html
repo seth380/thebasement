@@ -416,12 +416,14 @@ function frame(now){
 
 /* ---------- flow ---------- */
 function setMedals(el,s){[].forEach.call(el.children,(c,i)=>c.classList.toggle('got',s>=MEDALS[i]));}
+const pay=(n,why)=>{try{if(typeof api!=='undefined'&&api&&api.coins)api.coins(n,why);}catch(e){}};
 function finish(){
   state='done';$('game').classList.remove('live');$('xh').hidden=true;reloadT=0;
   slots.forEach(s=>{if(s.st!=='down')s.st='falling';});
   const rec=!best.score||score>best.score;if(rec)best.score=score;
   try{localStorage.setItem('ccr-best',JSON.stringify(best));}catch(e){}
   let m=-1;MEDALS.forEach((v,i)=>{if(score>=v)m=i;});
+  pay(Math.min(200,Math.round(score/70))+(m>=0?[10,25,50][m]:0),'Range round');
   $('rtitle').textContent=m>=0?MNAMES[m]+' medal!':'Time!';
   $('total').textContent=num(score);$('rec').hidden=!(rec&&score>0);
   setMedals($('rmedals'),score);

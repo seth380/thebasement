@@ -29,7 +29,7 @@ function fbTick(dt){
         const goal=Math.abs(b.y-170)<52;
         if(b.x<15&&!goal){b.x=15;b.vx=Math.abs(b.vx);}if(b.x>585&&!goal){b.x=585;b.vx=-Math.abs(b.vx);}
         if(b.x<-4||b.x>604){const me=b.x>300;FB.score[me?0:1]++;SFX.play(me?'goal':'error');
-          if(FB.score[me?0:1]>=5){FB.over=me?'You win!':'The computer wins.';const st=readJ('foos-stats');st[me?'w':'l']=(st[me?'w':'l']||0)+1;store.setItem('foos-stats',JSON.stringify(st));}
+          if(FB.score[me?0:1]>=5){FB.over=me?'You win!':'The computer wins.';if(me)addCoins(PAY.tableWin.foos,'Foosball win');const st=readJ('foos-stats');st[me?'w':'l']=(st[me?'w':'l']||0)+1;store.setItem('foos-stats',JSON.stringify(st));}
           else fbServe(me?-1:1);fbHud();foos.spin=1.2;return;}
         for(const r of FB_RODS)for(const m of r.base){const mx=r.x,my=170+m+r.off,dx=b.x-mx,dy=b.y-my,d=Math.hypot(dx,dy);
           if(d<17&&d>0.01){const nx=dx/d,ny=dy/d;b.x=mx+nx*17;b.y=my+ny*17;const dir=r.t?-1:1,pow=r.t?(225+Math.random()*90*sk):(FB.kickT>0?520:310);

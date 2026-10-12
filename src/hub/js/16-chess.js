@@ -96,7 +96,7 @@ function chRender(){
   chSync(b);
 }
 function chNew(){chs.s=chInit();chs.legal=chLegal(chs.s);chs.sel=-1;chs.last=[];chs.over='';chRender();}
-function chEnd(r,why){SFX.play(r==='w'?'win':r==='l'?'error':'bong',{delay:0.25});chs.over=why;const st=readJ('chess-stats');st[r]=(st[r]||0)+1;store.setItem('chess-stats',JSON.stringify(st));}
+function chEnd(r,why){if(r==='w')addCoins(PAY.tableWin.chess*(chs.diff>=2?2:1),'Chess win');else if(r==='d')addCoins(PAY.tableDraw,'Chess draw');SFX.play(r==='w'?'win':r==='l'?'error':'bong',{delay:0.25});chs.over=why;const st=readJ('chess-stats');st[r]=(st[r]||0)+1;store.setItem('chess-stats',JSON.stringify(st));}
 function chCommit(m){
   SFX.play(chs.s.b[m.t]?'remove':'place');
   const mover=chs.s.turn;chs.s=chMake(chs.s,m);chs.last=[m.f,m.t];chs.sel=-1;chs.legal=chLegal(chs.s);
