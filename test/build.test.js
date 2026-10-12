@@ -16,7 +16,8 @@ test('build bundles all cabinets with scoped timers and document listeners',()=>
   }
   assert.equal((html.match(/api\.onDocument\('pointerlockchange'/g)||[]).length,2);
   assert.equal((html.match(/api\.onDocument\('pointerlockerror'/g)||[]).length,2);
-  assert.equal((html.match(/document\.addEventListener\('pointerlockchange'/g)||[]).length,0);
+  // The hub's own persistent mouse-look listener remains; neither minigame adds one.
+  assert.equal((html.match(/document\.addEventListener\('pointerlockchange'/g)||[]).length,1);
 
   const scripts=[...html.matchAll(/<script(?:\s+[^>]*)?>([\s\S]*?)<\/script>/gi)];
   let parsed=0;
