@@ -16,7 +16,12 @@ const CODE=(argCode||process.env.BASEMENT_CODE||'').trim();
 const TOKEN=CODE?crypto.createHash('sha256').update('basement:'+CODE).digest('hex'):'';
 const hasPass=req=>{if(!CODE)return true;const m=/(?:^|;\s*)bcode=([a-f0-9]{64})/.exec(req.headers.cookie||'');
   return !!m&&crypto.timingSafeEqual(Buffer.from(m[1]),Buffer.from(TOKEN));};
-const sameCode=c=>typeof c==='string'&&c.length===CODE.length&&crypto.timingSafeEqual(Buffer.from(c),Buffer.from(CODE));
+/* Compare UTF-8 bytes, not JS string lengths: equal character counts can have different byte lengths. */
+const sameCode=c=>{
+  if(typeof c!=='string')return false;
+  const candidate=Buffer.from(c),expected=Buffer.from(CODE);
+  return candidate.length===expected.length&&crypto.timingSafeEqual(candidate,expected);
+};
 const passCookie='bcode='+TOKEN+'; Path=/; Max-Age=2592000; HttpOnly; SameSite=Lax';
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function gatePage(res,wrong){
@@ -28,7 +33,9 @@ function gatePage(res,wrong){
   '<label for="c" style="font-weight:400">Code</label><input id="c" name="code" autocomplete="off" autofocus required><button type="submit">Go downstairs</button></form></html>');
 }
 const server=http.createServer((req,res)=>{
-  const url=new URL(req.url||'/','http://x');let p=decodeURIComponent(url.pathname);
+  let url,p;
+  try{url=new URL(req.url||'/','http://x');p=decodeURIComponent(url.pathname);}
+  catch(e){res.writeHead(400,{'content-type':'text/plain; charset=utf-8'});res.end('Bad request');return;}
   if(p==='/healthz'){res.writeHead(200,{'content-type':'text/plain'});res.end('ok');return;}
   if(CODE){
     if(p==='/enter'&&req.method==='POST'){let body='';req.on('data',d=>{if(body.length<2000)body+=d;});req.on('end',()=>{

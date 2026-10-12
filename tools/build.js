@@ -22,7 +22,9 @@ for(const [id,file,cast] of games){
   let js=s.slice(s.lastIndexOf('<script>')+8,s.lastIndexOf('</script>')).trim();
   if(!js.startsWith('(function(){')||!js.endsWith('})();'))throw new Error('wrapper '+id);
   /* each game becomes a function the hub can start and stop; window, requestAnimationFrame and localStorage are sandboxed stand-ins */
-  js='GAMES.'+id+'=function(root,api,window,requestAnimationFrame,localStorage){'+js.slice(12,-5)+'};';
+  /* Game-owned timers and document listeners are tracked by the host; standalone sources stay untouched. */
+  js='GAMES.'+id+'=function(root,api,window,requestAnimationFrame,localStorage,setTimeout,clearTimeout,setInterval,clearInterval){'+js.slice(12,-5)+'};';
+  js=js.replace(/\bdocument\.addEventListener\s*\(/g,'api.onDocument(');
   js=must(js,"const $=id=>document.getElementById(id);","const $=id=>root.querySelector('#'+id);");
   js=must(js,"const hex=n=>'#'+n.toString(16).padStart(6,'0');","const hex=n=>'#'+n.toString(16).padStart(6,'0');api.cast("+cast+");");
   const ex='<button class="go alt" data-exit type="button">Back to the basement</button>';
