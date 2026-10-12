@@ -27,3 +27,16 @@ $('h-prompt').addEventListener('click',act);
   ['pointerup','pointercancel'].forEach(n=>st.addEventListener(n,up));
 }
 
+
+/* mouse look: click the view to take the mouse (like the games). The mouse turns you and tilts the camera,
+   A and D step sideways, Esc gives the mouse back. Without it, the old keyboard turning still works. */
+let looking=false,camPitch=0.23;
+function unlook(){if(document.pointerLockElement)try{document.exitPointerLock();}catch(e){}}
+$('h-wrap').addEventListener('click',e=>{
+  if(coarse||looking||mode!=='walk'||modal())return;
+  const t=e.target;if(t&&t.closest&&t.closest('button,input,.h-panel,.h-over,.h-card'))return;
+  try{const r=$('h-view').requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(x){}
+});
+document.addEventListener('pointerlockchange',()=>{looking=document.pointerLockElement===$('h-view');
+  $('h-hint').textContent=looking?'Mouse to look · W A S D to move · E to use · Esc to free the mouse':'Click to look around with the mouse · W A S D or arrow keys to walk · E to use';});
+document.addEventListener('mousemove',e=>{if(!looking)return;P.h-=e.movementX*0.0026;camPitch=Math.max(-0.12,Math.min(0.95,camPitch+e.movementY*0.0022));});
