@@ -83,7 +83,7 @@ wss.on('connection',ws=>{
       return;
     }
     if(!c.room)return;
-    if(m.t==='p'){c.x=num(m.x,-40,20,c.x);c.z=num(m.z,-20,20,c.z);c.h=num(m.h,-1e4,1e4,c.h);c.m=num(m.m,0,1,0);c.s=cleanStatus(m.s);c.l=m.l===1?1:0;}
+    if(m.t==='p'){c.x=num(m.x,-40,20,c.x);c.z=num(m.z,-20,20,c.z);c.h=num(m.h,-1e4,1e4,c.h);c.m=num(m.m,0,1,0);c.s=cleanStatus(m.s);c.l=num(m.l,0,3,0)|0;}
     else if(m.t==='av'){c.name=cleanName(m.name);c.av=cleanLook(m.av);others(c,{t:'av',id:c.id,name:c.name,av:c.av});}
     else if(m.t==='e'){others(c,{t:'e',id:c.id,k:num(m.k,0,3,0)|0});}
   });

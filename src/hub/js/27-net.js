@@ -84,13 +84,13 @@ function netFrame(dt){
     let dh=p.th-p.h;dh=Math.atan2(Math.sin(dh),Math.cos(dh));p.h+=dh*k;
     p.mv+=(p.tmv-p.mv)*k;p.phase+=dt*9;
     const sit=p.s==='sit',a=p.m;p.sitY+=((sit?sitLift(a):0)-p.sitY)*Math.min(1,dt*10);
-    const y=floorY(p.x)+(p.l?UY:0)+p.sitY;a.g.position.set(p.x,y+(a.actor?0:Math.abs(Math.sin(p.phase))*0.025*p.mv),p.z);a.g.rotation.y=p.h;
+    const pl=p.l||0,y=(pl?lvY(pl):floorY(p.x))+p.sitY;a.g.visible=pl===lvl;a.g.position.set(p.x,y+(a.actor?0:Math.abs(Math.sin(p.phase))*0.025*p.mv),p.z);a.g.rotation.y=p.h;
     animateBody(a,dt,p.mv,sit?'sit':'walk',tvT,p.phase);
     const b=p.bub;if(b.life>0)b.life-=dt;
     if(b.life<=0){const st=netStatusText(p.s);if(st)netSay(b,st,0.5);else b.text='';}
-    b.sp.visible=b.life>0&&!!b.text;b.sp.position.set(p.x,y+2.15,p.z);
+    b.sp.visible=b.life>0&&!!b.text&&pl===lvl;b.sp.position.set(p.x,y+2.15,p.z);
   }
-  const b=NET.bub;if(b){if(b.life>0)b.life-=dt;b.sp.visible=b.life>0;b.sp.position.set(P.x,floorY(P.x)+(lvl?UY:0)+2.15,P.z);}
+  const b=NET.bub;if(b){if(b.life>0)b.life-=dt;b.sp.visible=b.life>0;b.sp.position.set(P.x,(lvl?lvY(lvl):floorY(P.x))+2.15,P.z);}
 }
 $('h-b-net').addEventListener('click',()=>{
   const link=location.origin+location.pathname+'?room='+NET.room;

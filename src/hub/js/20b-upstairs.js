@@ -322,25 +322,7 @@ const UP={fire:false,cook:0,flip:0,stack:0,fridge:0,siz:null,busy:false,tick:0,d
 }
 const SOFA_UP={x:5.72,z:-2,h:Math.PI/2,stand:[6.55,-2],cam:[4.15,1.95,-2],look:[11,1.25,-2]};
 
-/* ---- going up and down ---- */
-const fadeEl=document.createElement('div');fadeEl.style.cssText='position:absolute;inset:0;background:#0b0816;opacity:0;pointer-events:none;transition:opacity .35s ease';$('h-view').after(fadeEl);
-const lvHidden=[];
-/* only one floor is drawn: the other one (lights and all) is hidden, which also keeps each floor's light from leaking into the other */
-function setLevel(n){
-  lvl=n;U.visible=n===1;
-  if(n===1){
-    const keep=new Set([U,avatar.g,sun,moon]);NET.peers.forEach(p=>{keep.add(p.m.g);keep.add(p.bub.sp);});if(NET.bub)keep.add(NET.bub.sp);
-    scene.children.forEach(o=>{if(keep.has(o)||(o.isPoints&&o.material===starM)||!o.visible)return;o.visible=false;lvHidden.push(o);});
-  }else{lvHidden.forEach(o=>o.visible=true);lvHidden.length=0;}
-  const tag=document.querySelector('#h-tag b');if(tag)tag.textContent=n?'Upstairs':'Basement Arcade';
-}
-function goLevel(n,x,z,h){
-  if(UP.busy||mode!=='walk')return;UP.busy=true;
-  SFX.play('steps',{vol:0.9,rate:1.1});fadeEl.style.opacity='1';
-  setTimeout(()=>{setLevel(n);P.x=x;P.z=z;P.h=h;P.move=0;camSnap=true;
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{fadeEl.style.opacity='0';UP.busy=false;}));
-    if(n===1&&!store.getItem('up-seen')){store.setItem('up-seen','1');setTimeout(()=>toast('Upstairs! A kitchen, a living room and a bedroom'),400);}},380);
-}
+/* the stairs from the basement (going between floors lives in 20e-levels.js) */
 things.push({x:10.4,z:3.75,r:0.95,text:'Go upstairs',fn:()=>goLevel(1,8.7,6.6,-2.36)});
 function napTime(){
   if(UP.busy)return;UP.busy=true;SFX.play('drop2');fadeEl.style.transition='opacity .9s ease';fadeEl.style.opacity='1';
@@ -349,7 +331,7 @@ function napTime(){
     SFX.play('win',{vol:0.6});toast(night?'Good morning! Rise and shine':'What a nice nap');},1500);
 }
 function upTick(dt,t){
-  if(!lvl)return;
+  if(lvl!==1)return;
   UP.tick-=dt;if(UP.tick<=0){UP.tick=0.25;const a=(hour-6)/24*Math.PI*2,el=Math.sin(a),day=Math.max(0,Math.min(1,(el+0.12)/0.4));UP.day=day;
     UP.hemi.intensity=0.16+0.26*day;UP.sun.intensity=0.05+0.5*day;UP.sun.color.setHex(day>0.5?0xfff0d8:0xffc898);UP.lamps.forEach(l=>l.intensity=0.95-0.5*day);UP.starM.opacity=0.08+0.8*(1-day);}
   /* fire */
