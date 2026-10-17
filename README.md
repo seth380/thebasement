@@ -1,6 +1,6 @@
 # The Basement
 
-A walk-around 3D basement in the browser. Arcade cabinets on the back wall launch minigames; the room itself has pool, foosball, chess, checkers, an aquarium, and a secret or two. The stairs lead up to the house: a kitchen (pancakes, a fridge), a living room (sofa, TV, fireplace) and a bedroom (nap until morning, wardrobe).
+A walk-around 3D basement in the browser. Arcade cabinets on the back wall launch minigames; the room itself has pool, foosball, chess, checkers, an aquarium, and a secret or two. The stairs lead up to the house: a kitchen (pancakes, a fridge), a living room (sofa, TV, fireplace) and a bedroom (nap until morning, wardrobe). A lift (east wall) travels to two more bases, each with its own arcade wall: the Hero Cave (hero car, super computer, suits, bats, a giant coin) and the Star Deck (hyperdrive to a new planet each jump, captain's chair, hover-bot, snack replicator). Mark any base with ☆ in the lift to make it home, where you start.
 
 ## Cabinets
 

@@ -83,7 +83,7 @@ function openChk(){SFX.play('open');if(!ck.b)ckNew();$('h-chk').hidden=false;ckR
 $('h-chk-new').addEventListener('click',ckNew);
 $('h-chk-leave').addEventListener('click',()=>closeOvers());
 ckSync(ckInit());
-const OVERS=['h-troph','h-chk','h-chess','h-foos','h-pool','h-shop'];
+const OVERS=['h-troph','h-chk','h-chess','h-foos','h-pool','h-shop','h-lift'];
 const modal=()=>OVERS.some(id=>!$(id).hidden);
 function closeOvers(){if(modal())SFX.play('close');OVERS.forEach(id=>{$(id).hidden=true;});FB.on=false;PL.on=false;}
 
