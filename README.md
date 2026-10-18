@@ -24,6 +24,10 @@ tools/build.js       joins everything into dist/
 server/server.js     serves dist/ and runs the multiplayer rooms
 ```
 
+## Decorating
+
+Press **Decorate** (or B) in any base. Pick something from the tray (furniture, fun stuff, plants, lights, rugs), move the mouse or tap the floor to put it where you want, R or Turn to rotate it, then click or Place. Green means it fits, red means it doesn't. Click a placed thing to pick it up and move it, or **Put away** to send it back to your storage. A few things are free; the rest are bought once with coins and can be placed as many times as you own them. Many have something to do once placed (jukebox, drum kit, claw machine, trampoline, rocket). Decorations are saved in this browser.
+
 ## Graphics
 
 Everything is drawn with glow (bloom), colour grading and smoothed edges. The **Graphics** button in the basement switches between High, Medium (the default on phones) and Low (no glow, fastest); the choice applies to every cabinet. If frames run slow and you haven't picked a setting yourself, it steps down on its own and says so.

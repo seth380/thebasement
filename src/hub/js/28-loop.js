@@ -26,9 +26,11 @@ function collide(){
       if(m===l)P.x=b.x0-r;else if(m===rr)P.x=b.x1+r;else if(m===t)P.z=b.z0-r;else P.z=b.z1+r;}
   }
 }
-function frame(now){
+function frame(){
   if(mode==='game')return;
-  const dt=Math.min(0.05,(now-last)/1000);last=now;tvT+=dt;
+  /* the clock is read here rather than taken from the browser's frame time, which can start out behind (a negative step stalled the sky)
+     or stand still in some embedded browsers */
+  const now=performance.now(),dt=Math.max(0,Math.min(0.05,(now-last)/1000));last=now;tvT+=dt;
   let fwd=0,turn=0;
   if(mode==='walk'&&!modal()&&!UP.busy){
     fwd=(keys.up?1:0)-(keys.down?1:0)-jy;turn=(keys.left?1:0)-(keys.right?1:0)-jx;
@@ -52,10 +54,12 @@ function frame(now){
   if(mode==='custom'){camT.set(P.x+fx*2.5+fz*0.5,1.35,P.z+fz*2.5-fx*0.5);lookT.set(P.x,0.95,P.z);}
   else if(sitting){camT.set(seat.cam[0],seat.cam[1],seat.cam[2]);lookT.set(seat.look[0],seat.look[1],seat.look[2]);}
   else{/* orbit behind you; the mouse tilts it up and down */
-    const cp=Math.cos(camPitch),spch=Math.sin(camPitch);camT.set(P.x-fx*3.5*cp,1.25+3.5*spch,P.z-fz*3.5*cp);lookT.set(P.x+fx*0.8,1.25-0.85*spch+0.2*cp-0.2,P.z+fz*0.8);}
+    /* decorating: a little further back and higher, looking down at the floor */
+    const cp=Math.cos(camPitch),spch=Math.sin(camPitch);camT.set(P.x-fx*3.5*cp,1.25+3.5*spch,P.z-fz*3.5*cp);lookT.set(P.x+fx*0.8,1.25-0.85*spch+0.2*cp-0.2,P.z+fz*0.8);
+    if(DECO.on){camT.set(P.x-fx*3.2,2.6,P.z-fz*3.2);lookT.set(P.x+fx*2.4,0.2,P.z+fz*2.4);}}
   if(lvl){/* other levels: keep the camera inside (in the room you are in, upstairs) and under the ceiling */
     const L=LV[lvl];camT.y+=L.y;lookT.y+=L.y;L.cam(camT);camT.y=Math.min(L.y+L.ceil-0.15,camT.y);}
-  else if(P.x>-10.9||mode!=='walk'){camT.x=Math.max(-RX+0.35,Math.min(RX-0.35,camT.x));camT.z=Math.max(-RZ+0.35,Math.min(RZ-0.35,camT.z));}
+  else if(P.x>-10.9||mode!=='walk'){camT.x=Math.max(-RX+0.35,Math.min(RX-0.35,camT.x));camT.z=Math.max(-RZ+0.35,Math.min(RZ-0.35,camT.z));if(DECO.on)camT.y=Math.min(RH-0.2,camT.y);}
   else{camT.x=Math.max(-30.5,Math.min(-10.4,camT.x));
     if(camT.x>CAVE.x+CAVE.r-0.2)camT.z=Math.max(SZ0+0.3,Math.min(SZ1-0.3,camT.z));else{const dx=camT.x-CAVE.x,dz=camT.z-CAVE.z,d=Math.hypot(dx,dz);if(d>CAVE.r+0.3){camT.x=CAVE.x+dx/d*(CAVE.r+0.3);camT.z=CAVE.z+dz/d*(CAVE.r+0.3);}}
     camT.y=floorY(camT.x)+(camT.x>CAVE.x+CAVE.r?1.75:2.3);lookT.y+=fy;}
@@ -63,12 +67,12 @@ function frame(now){
   camera.position.lerp(camT,k);look.lerp(lookT,k);camera.lookAt(look);
   /* anyone standing between the camera and you (a friend walking past behind you) steps out of view instead of filling the screen */
   {const cx=camera.position.x,cz=camera.position.z,dx=P.x-cx,dz=P.z-cz,dd=Math.max(0.01,dx*dx+dz*dz),near=(g,x,z)=>{if(!g)return;
-     const qx=x-cx,qz=z-cz,t=(qx*dx+qz*dz)/dd,lat=Math.hypot(qx-t*dx,qz-t*dz),h=(t>-0.2&&t<0.78&&lat<0.8)||qx*qx+qz*qz<0.6;if(g.userData.camHide!==h){g.userData.camHide=h;g.children.forEach(c=>c.visible=!h);}};
+     const qx=x-cx,qz=z-cz,t=(qx*dx+qz*dz)/dd,lat=Math.hypot(qx-t*dx,qz-t*dz),h=(t>-0.2&&t<0.78&&lat<0.95)||qx*qx+qz*qz<2.25;if(g.userData.camHide!==h){g.userData.camHide=h;g.children.forEach(c=>c.visible=!h);}};
    if(!lvl){npcs.forEach(n=>near(n.b.g,n.x,n.z));if(PET.a)near(PET.a.g,PET.x,PET.z);}NET.peers.forEach(p=>near(p.m.g,p.x,p.z));}
 
   /* what is in reach */
   near=null;
-  if(mode==='walk'&&!UP.busy){let bd=1e9;for(const t of things){if((t.lv||0)!==lvl||t.cond&&!t.cond())continue;const d=Math.hypot(P.x-t.x,P.z-t.z);if(d<t.r&&d<bd){bd=d;near=t;}}
+  if(mode==='walk'&&!UP.busy&&!DECO.on){let bd=1e9;for(const t of things){if((t.lv||0)!==lvl||t.cond&&!t.cond())continue;const d=Math.hypot(P.x-t.x,P.z-t.z);if(d<t.r&&d<bd){bd=d;near=t;}}
     if(!lvl)for(const n of npcs){const d=Math.hypot(P.x-n.x,P.z-n.z);if(d<1.25&&d<bd+0.4){bd=d;near={text:'Talk to '+n.name,fn:()=>npcTalk(n)};}}}
   const pt=mode==='sit'?'Stand up':near?(typeof near.text==='function'?near.text():near.text):'';
   const pe=$('h-prompt');if(pt&&!modal()){pe.hidden=false;const full=(coarse?'':'E  ·  ')+pt;if(pe.textContent!==full)pe.textContent=full;}else pe.hidden=true;
@@ -83,7 +87,7 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 
-buildAvatar();goHome();resize();refreshTrophies(false);
+buildAvatar();goHome();resize();refreshTrophies(false);updateWorld(0);
 if(firstRun)openCustom(true);
 if(document.fonts&&document.fonts.load)document.fonts.load('40px "Lilita One"').then(()=>redraws.forEach(f=>f())).catch(()=>{});
 requestAnimationFrame(frame);

@@ -87,5 +87,5 @@ $('h-lift-close').addEventListener('click',()=>{$('h-lift').hidden=true;SFX.play
 /* bump detail on the shared textures everywhere (wood floors, wall panels, paint, wood, fabric, rugs) */
 GFX.bumpAll(scene,[[floorTex,0.8,floorNorm],[panelTex,0.6],[paintTex,0.25],[woodTex,0.4],[fabricTex,0.45],[rugTex,0.35]]);
 function lvTick(dt,t){
-  upTick(dt,t);caveTick(dt,t);deckTick(dt,t);liftTick(dt);atmTick(dt,t);
+  upTick(dt,t);caveTick(dt,t);deckTick(dt,t);liftTick(dt);atmTick(dt,t);decoTick(dt,t);
 }

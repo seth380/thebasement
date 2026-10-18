@@ -38,7 +38,7 @@ function openGame(i){
       document.addEventListener(type,listener,{...opts,signal:ctl.signal});
     }};
   coinLog=[];
-  try{window.GAMES[m.id](root,api,win,f=>{if(!g.dead)requestAnimationFrame(t=>{if(!g.dead)f(t);});},store,
+  try{window.GAMES[m.id](root,api,win,f=>{if(!g.dead)requestAnimationFrame(()=>{if(!g.dead)f(performance.now());});},store,
     later,cancelLater,every,cancelEvery);}catch(e){console.error('cabinet failed:',e&&e.stack||e);closeGame();toast('That cabinet would not start');return;}
   root.querySelectorAll('[data-exit]').forEach(b=>b.addEventListener('click',closeGame));
   leave.addEventListener('click',closeGame);
