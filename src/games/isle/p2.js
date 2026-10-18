@@ -14,6 +14,8 @@ try{
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,coarse?1.5:2));
 renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.9;
 renderer.shadowMap.enabled=!coarse;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+/* glow and colour (shared/post.js): the lighthouse lamp, lanterns and the sun through the fog bloom softly */
+const post=GFX.post(renderer,{strength:0.7,threshold:0.78,knee:0.4,spread:1.3,vignette:0.3,sat:1.04,contrast:1.05,warm:0.02});
 const scene=new THREE.Scene();scene.background=new THREE.Color(FOGC);scene.fog=new THREE.FogExp2(FOGC,0.03);
 const camera=new THREE.PerspectiveCamera(66,1,0.08,700);camera.rotation.order='YXZ';
 const hemi=new THREE.HemisphereLight(0xbfd4d2,0x3d3a2e,0.5);scene.add(hemi);

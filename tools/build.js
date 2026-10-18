@@ -36,7 +36,7 @@ for(const [id,file,cast] of games){
 const hubJs=fs.readdirSync(path.join(src,'hub/js')).filter(f=>f.endsWith('.js')).sort().map(f=>read('hub/js/'+f).replace(/\n$/,'')).join('\n');
 let hub=read('hub/index.html');
 hub=must(hub,'<!--GAME_TEMPLATES-->',tpl);
-hub=must(hub,'<!--GAME_SCRIPTS-->','<script>\n'+read('shared/critter.js')+'\n'+read('shared/sfx.js')+'\n</script>\n'+scr);
+hub=must(hub,'<!--GAME_SCRIPTS-->','<script>\n'+read('shared/critter.js')+'\n'+read('shared/post.js')+'\n'+read('shared/sfx.js')+'\n</script>\n'+scr);
 hub=must(hub,'<!--HUB_SCRIPT-->',"<script>\n(function(){\n'use strict';\n"+hubJs+'\n})();\n</script>');
 fs.mkdirSync(dist,{recursive:true});
 fs.writeFileSync(path.join(dist,'basement-arcade.html'),hub);

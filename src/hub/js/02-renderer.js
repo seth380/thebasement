@@ -9,6 +9,8 @@ renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.95;
 renderer.shadowMap.enabled=!coarse;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x0c0a09);
+/* glow and colour grading (shared/post.js); each base sets its own look in 20e-levels.js */
+const POST=GFX.post(renderer,{strength:0.8,threshold:0.72,knee:0.35,vignette:0.28,sat:1.08,contrast:1.05,warm:0.03});
 const camera=new THREE.PerspectiveCamera(58,1,0.1,260);
 {
   const pm=new THREE.PMREMGenerator(renderer),es=new THREE.Scene();

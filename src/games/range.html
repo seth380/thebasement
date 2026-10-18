@@ -140,12 +140,15 @@ try{
   renderer=new THREE.WebGLRenderer({canvas:$('view'),antialias:true,alpha:true});
 }catch(e){ $('menu').hidden=true; $('nogl').hidden=false; return; }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const post=GFX.post(renderer,{srgb:false,strength:0.28,threshold:0.97,knee:0.12,vignette:0.22,sat:1.06,contrast:1.05,warm:0.01});
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0xfff1cf,70,260);
 const camera=new THREE.PerspectiveCamera(50,1,0.1,600);
 camera.rotation.order='YXZ';camera.position.set(0,1.7,0);scene.add(camera);
 scene.add(new THREE.HemisphereLight(0xffffff,0xd9a066,0.9));
-const sunL=new THREE.DirectionalLight(0xfff2cc,0.7); sunL.position.set(30,60,40); scene.add(sunL);
+const sunL=new THREE.DirectionalLight(0xfff2cc,0.85); sunL.position.set(30,45,30); scene.add(sunL);
+const lowFx=window.matchMedia&&matchMedia('(pointer:coarse)').matches;
+if(!lowFx){GFX.sunShadow(renderer,sunL,34,2048);sunL.target.position.set(0,0,-18);scene.add(sunL.target);sunL.position.set(30,45,12);}
 
 let seed=4411;
 function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
@@ -155,10 +158,25 @@ function canvasTex(w,h,draw){const c=document.createElement('canvas');c.width=w;
 function addBox(w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);scene.add(m);return m;}
 
 /* ---------- canyon ---------- */
+/* sandstone: layered bands and cracks, with a matching bump map so the rock catches the low sun */
+const strataTex=(()=>{const t=canvasTex(256,256,c=>{c.fillStyle='#fff';c.fillRect(0,0,256,256);let y=0;
+    while(y<256){const h=8+rnd()*26,v=222+rnd()*33|0;c.fillStyle='rgb('+v+','+(v-5)+','+(v-12)+')';c.fillRect(0,y,256,h);c.fillStyle='rgba(110,50,15,.16)';c.fillRect(0,y+h-1.5,256,1.5);y+=h;}
+    for(let i=0;i<120;i++){c.fillStyle='rgba('+(rnd()<0.5?'90,40,15':'255,240,220')+','+(0.05+rnd()*0.08)+')';c.beginPath();c.ellipse(rnd()*256,rnd()*256,2+rnd()*10,1+rnd()*3,0,0,7);c.fill();}
+    c.strokeStyle='rgba(100,40,12,.22)';c.lineWidth=1.2;for(let i=0;i<5;i++){let x=rnd()*256,yy=rnd()*256;c.beginPath();c.moveTo(x,yy);for(let k=0;k<5;k++){x+=(rnd()-0.5)*14;yy+=6+rnd()*10;c.lineTo(x,yy);}c.stroke();}});
+  t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;})();
+const strataN=GFX.normalMap?GFX.normalMap(strataTex.image):null;
+const rockMats={};
+const rock=(c,rx,ry)=>{const k=c+':'+rx+':'+ry;if(rockMats[k])return rockMats[k];const t=strataTex.clone(),n=strataN&&strataN.clone();t.needsUpdate=true;t.repeat.set(rx||1,ry||1);
+  if(n){n.needsUpdate=true;n.repeat.copy(t.repeat);}return rockMats[k]=new THREE.MeshPhongMaterial({color:c,map:t,normalMap:n||null,normalScale:new THREE.Vector2(0.9,0.9),flatShading:true,shininess:4,specular:0x221100});};
 {
-  const g=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshBasicMaterial({color:0xf2c98a}));g.rotation.x=-Math.PI/2;scene.add(g);
-  addBox(46,2.9,9.5,flat(0xe08a4f),0,1.45,-22.25);addBox(46.4,0.18,9.9,flat(0xf7c58c),0,2.9,-22.25);
-  addBox(46,6.3,15,flat(0xc96f3f),0,3.15,-34.5);addBox(46.4,0.18,15.4,flat(0xf0b077),0,6.3,-34.5);
+  const sandT=canvasTex(256,256,c=>{c.fillStyle='#fff';c.fillRect(0,0,256,256);for(let i=0;i<70;i++){const y=rnd()*256;c.strokeStyle='rgba(150,90,40,'+(0.06+rnd()*0.08)+')';c.lineWidth=2+rnd()*3;c.beginPath();c.moveTo(0,y);
+      for(let x=0;x<=256;x+=16)c.lineTo(x,y+Math.sin(x*0.05+i)*4);c.stroke();}
+    for(let i=0;i<500;i++){c.fillStyle='rgba('+(rnd()<0.5?'120,70,30':'255,250,235')+','+rnd()*0.25+')';c.fillRect(rnd()*256,rnd()*256,1.5,1.5);}});
+  sandT.wrapS=sandT.wrapT=THREE.RepeatWrapping;sandT.repeat.set(70,70);const sandN=GFX.normalMap?GFX.normalMap(sandT.image):null;if(sandN)sandN.repeat.set(70,70);
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(600,600),new THREE.MeshLambertMaterial({color:0xf2c98a,map:sandT}));g.rotation.x=-Math.PI/2;g.receiveShadow=true;scene.add(g);
+  if(sandN){g.material=new THREE.MeshLambertMaterial({color:0xa38459,map:sandT});}
+  addBox(46,2.9,9.5,rock(0xe08a4f,4,0.5),0,1.45,-22.25);addBox(46.4,0.18,9.9,flat(0xf7c58c),0,2.9,-22.25);
+  addBox(46,6.3,15,rock(0xc96f3f,4,0.9),0,3.15,-34.5);addBox(46.4,0.18,15.4,flat(0xf0b077),0,6.3,-34.5);
   addBox(13,0.9,0.16,lam(0xb8743a),0,0.45,-11.5);addBox(13.3,0.12,0.3,lam(0xfff8e7),0,0.92,-11.5);
   [-6.5,-3.25,0,3.25,6.5].forEach(x=>addBox(0.25,1.1,0.25,lam(0x8a5a34),x,0.55,-11.4));
   const bands=[0xd9773f,0xe9955a,0xf2b47c];
@@ -167,7 +185,7 @@ function addBox(w,h,d,mat,x,y,z){const m=new THREE.Mesh(new THREE.BoxGeometry(w,
     const x=side?side*(30+rnd()*22):-40+(i-10)*40+rnd()*10,z=side?-6-rnd()*60:-68-rnd()*20;
     const r=9+rnd()*7,h=14+rnd()*18;
     for(let k=0;k<3;k++){
-      const m=new THREE.Mesh(new THREE.CylinderGeometry(r*(1-k*0.18)*0.85,r*(1-k*0.18),h/3,7),flat(bands[(i+k)%3]));
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(r*(1-k*0.18)*0.85,r*(1-k*0.18),h/3,7),rock(bands[(i+k)%3],3,1));
       m.position.set(x,h/6+k*h/3,z);m.rotation.y=rnd()*3;scene.add(m);
     }
   }
@@ -204,9 +222,11 @@ const slots=[];
 function addSlot(x,base,z,s,row,rowMult,moving){
   const g=new THREE.Group();g.position.set(x,base,z);g.rotation.x=-Math.PI/2;scene.add(g);
   const post=new THREE.Mesh(new THREE.BoxGeometry(0.22*s,0.5*s,0.1*s),postMat);post.position.y=0.25*s;g.add(post);
-  const disc=new THREE.Mesh(discGeo,[sideMat,faceMat.norm,backMat]);disc.position.y=1.3*s;disc.scale.set(s,s,s);g.add(disc);
+  const disc=new THREE.Mesh(discGeo,[sideMat,faceMat.norm,backMat]);disc.position.y=1.3*s;disc.scale.set(s,s,s);g.add(disc);post.castShadow=disc.castShadow=true;
   slots.push({g,disc,x0:x,x:x,cy:base+1.3*s,z,s,row,rowMult,moving,phase:rnd()*6,a:0,st:'down',life:0,kind:'norm',R:s});
 }
+/* everything built so far stands in the sun's shadows */
+scene.traverse(o=>{if(o.isMesh&&!(o.material&&o.material.isMeshBasicMaterial)){o.castShadow=true;o.receiveShadow=true;}});
 [-5,-2.5,0,2.5,5].forEach(x=>addSlot(x,0.75,-12.2,0.6,0,1,false));
 [-6.6,-2.2,2.2,6.6].forEach(x=>addSlot(x,2.95,-19,0.75,1,1.5,true));
 [-8,-4,0,4,8].forEach(x=>addSlot(x,6.35,-29,0.9,2,2,false));
@@ -410,7 +430,7 @@ function frame(now){
     $('clock').classList.toggle('low',t<=10);
   }
   if(bigT>0){bigT-=dt;if(bigT<=0)$('big').textContent='';}
-  renderer.render(scene,camera);
+  post.render(scene,camera);
   requestAnimationFrame(frame);
 }
 

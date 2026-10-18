@@ -91,7 +91,7 @@ function frame(now){
   sunL.target.position.set(camera.position.x,0,camera.position.z);sunL.position.set(camera.position.x-60,62,camera.position.z+22);
   if(ac&&windG){const shore=smooth(30,58,Math.hypot(P.x,P.z));windG.gain.value=0.05+Math.sin(time*0.23)*0.02+Math.sin(time*0.61)*0.012;seaG.gain.value=(0.012+shore*0.05)*(0.6+0.4*Math.sin(time*0.7));
     humG.gain.value=powK*0.05*(1-smooth(4,22,Math.hypot(P.x+44,P.z-3.5)));}
-  renderer.render(scene,camera);
+  post.render(scene,camera);
   requestAnimationFrame(frame);
 }
 

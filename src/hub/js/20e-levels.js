@@ -14,8 +14,29 @@ const LV=[
     walk:rectIn(-11,11,-7,7),cam:v=>rectIn(-11,11,-7,7)(v,0.3),hello:'Welcome aboard the Star Deck!'}
 ];
 const lvY=n=>(LV[n]||LV[0]).y;
+/* each base's look after the scene is drawn: how much glow, from how bright, corner darkening and colour */
+/* and how bright each one is drawn overall: upstairs is daylight, so it is brought down to keep its colours */
+const LVEXP=[0.95,0.74,0.95,0.88];
+const LVPOST=[{strength:0.8,threshold:0.72,knee:0.35,vignette:0.28,sat:1.08,contrast:1.05,warm:0.03},
+  {strength:0.45,threshold:0.9,knee:0.3,vignette:0.2,sat:1.1,contrast:1.07,warm:0.035},
+  {strength:1.0,threshold:0.62,knee:0.35,vignette:0.36,sat:1.1,contrast:1.06,warm:-0.03},
+  {strength:0.7,threshold:0.8,knee:0.3,vignette:0.26,sat:1.08,contrast:1.06,warm:-0.02}];
 const fadeEl=document.createElement('div');fadeEl.style.cssText='position:absolute;inset:0;background:#0b0816;opacity:0;pointer-events:none;transition:opacity .35s ease';$('h-view').after(fadeEl);
 const lvHidden=[];
+/* what shiny things reflect in each base: a little box room with its own walls and lights, blurred into a reflection map once.
+   The basement's is made in 02-renderer.js */
+const LVENV=[scene.environment];
+/* made the first time you visit, so they cost nothing at start */
+const LVROOM=[null,
+  [0x2e2924,[[0,2.9,0,2,0.1,2,0xb8a890],[-4.9,1.4,0,0.1,1.4,2,0x8a9ab0],[4.9,1.4,-2,0.1,1.4,1.6,0x8a9ab0],[0,1.4,4.9,3,1.4,0.1,0x909cae],[0,-2.9,0,10,0.1,10,0x3a2c20]]],
+  [0x0c1018,[[0,2.9,0,4,0.1,4,0x405070],[0,1,4.9,4,1.2,0.1,0xff4fa0],[4.9,1.2,-2,0.1,1.2,3,0x38c8ff],[-4.9,1.4,-3,0.1,2.4,1.2,0x5fffe0]]],
+  [0x5a6274,[[0,2.9,0,8,0.1,0.6,0xeaf6ff],[0,1.5,-4.9,10,2.4,0.1,0x0a0c18],[0,0.1,4.9,6,0.2,0.1,0x38c8ff],[0,1.8,4.9,4,0.4,0.1,0xff4fa0]]]];
+function lvEnv(n){
+  if(LVENV[n]||!LVROOM[n])return LVENV[n]||LVENV[0];
+  const pm=new THREE.PMREMGenerator(renderer),es=new THREE.Scene(),R=LVROOM[n];
+  es.add(new THREE.Mesh(new THREE.BoxGeometry(10,6,10),new THREE.MeshBasicMaterial({color:R[0],side:THREE.BackSide})));
+  R[1].forEach(p=>{const m=new THREE.Mesh(new THREE.BoxGeometry(p[3],p[4],p[5]),new THREE.MeshBasicMaterial({color:p[6]}));m.position.set(p[0],p[1],p[2]);es.add(m);});
+  LVENV[n]=pm.fromScene(es,0.04).texture;es.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();});pm.dispose();return LVENV[n];}
 /* show one level: everything that belongs to the basement (the scene's own children) is hidden for any other level, and the other levels' groups are hidden.
    That also stops one level's lights from leaking into another, and the hidden ones cost nothing to draw */
 function setLevel(n){
@@ -27,6 +48,7 @@ function setLevel(n){
     scene.children.forEach(o=>{if(keep.has(o)||(L.sky&&o.isPoints&&o.material===starM)||!o.visible)return;o.visible=false;lvHidden.push(o);});
   }
   if(DK.hum&&n!==3)DK.hum.vol(0);
+  POST.set(LVPOST[n]||LVPOST[0]);renderer.toneMappingExposure=LVEXP[n];scene.environment=lvEnv(n);
   const tag=document.querySelector('#h-tag b');if(tag)tag.textContent=L.name;
 }
 function goLevel(n,x,z,h,snd){
@@ -62,6 +84,8 @@ $('h-lift-close').addEventListener('click',()=>{$('h-lift').hidden=true;SFX.play
 /* ---- a lift in the basement too, on the east wall between the fridge and the dresser ---- */
 {const L=liftDoors(scene,10.9,-3.6,-Math.PI/2,{frame:0x4a2f1c});things.push({x:10.05,z:-3.6,r:1.1,text:'Take the lift',fn:()=>openLift(L)});}
 
+/* bump detail on the shared textures everywhere (wood floors, wall panels, paint, wood, fabric, rugs) */
+GFX.bumpAll(scene,[[floorTex,0.8,floorNorm],[panelTex,0.6],[paintTex,0.25],[woodTex,0.4],[fabricTex,0.45],[rugTex,0.35]]);
 function lvTick(dt,t){
-  upTick(dt,t);caveTick(dt,t);deckTick(dt,t);liftTick(dt);
+  upTick(dt,t);caveTick(dt,t);deckTick(dt,t);liftTick(dt);atmTick(dt,t);
 }

@@ -154,6 +154,7 @@ try{
   renderer=new THREE.WebGLRenderer({canvas:$('view'),antialias:true,alpha:true});
 }catch(e){ $('menu').hidden=true; $('nogl').hidden=false; return; }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+const post=GFX.post(renderer,{srgb:false,strength:0.9,threshold:0.62,knee:0.35,vignette:0,sat:1.1,contrast:1.05});
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0x2a2244,50,240);
 const camera=new THREE.PerspectiveCamera(60,1,0.3,900);
@@ -550,7 +551,7 @@ function frame(now){
   if(bigT>0){bigT-=dt;if(bigT<=0)$('big').textContent='';}
   if(ac&&rollG){const run=state==='run';
     rollG.gain.value=run&&P.st==='ground'?Math.min(1,P.speed/16)*0.05:0;grindG.gain.value=run&&P.st==='grind'?0.06:0;}
-  renderer.render(scene,camera);
+  post.render(scene,camera);
   requestAnimationFrame(frame);
 }
 

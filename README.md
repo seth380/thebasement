@@ -24,6 +24,10 @@ tools/build.js       joins everything into dist/
 server/server.js     serves dist/ and runs the multiplayer rooms
 ```
 
+## Graphics
+
+Everything is drawn with glow (bloom), colour grading and smoothed edges. The **Graphics** button in the basement switches between High, Medium (the default on phones) and Low (no glow, fastest); the choice applies to every cabinet. If frames run slow and you haven't picked a setting yourself, it steps down on its own and says so.
+
 ## Run it
 
 ```

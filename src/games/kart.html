@@ -152,6 +152,8 @@ try{
   renderer=new THREE.WebGLRenderer({canvas:$('view'),antialias:true,alpha:true});
 }catch(e){ $('menu').hidden=true; $('nogl').hidden=false; return; }
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+/* glow and colour (shared/post.js); each race sets its own look in buildWorld */
+const post=GFX.post(renderer,{srgb:false,strength:0.5,threshold:0.86,vignette:0,sat:1.08,contrast:1.04});
 const scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0xd6f3ff,260,950);
 const camera=new THREE.PerspectiveCamera(62,1,0.5,2600);
@@ -331,6 +333,8 @@ function buildWorld(e){
   ev=e;world=new THREE.Group();scene.add(world);seed=EVENTS.indexOf(e)*7919+20261011;balloons=[];RINGS=[];waterTex=null;W=e.W;
   $('game').style.background='linear-gradient('+e.sky[0]+','+e.sky[1]+' 62%)';
   scene.fog.color.setHex(e.fog[0]);scene.fog.near=e.fog[1];scene.fog.far=e.fog[2];
+  /* each race's glow and colour */
+  post.set(e.id==='sunset'?{strength:0.7,threshold:0.8,knee:0.25,warm:0.04,sat:1.12}:e.veh==='plane'?{strength:0.3,threshold:0.96,knee:0.15,warm:0,sat:1.06}:e.veh==='ski'?{strength:0.35,threshold:0.94,knee:0.15,warm:0.01,sat:1.1}:{strength:0.35,threshold:0.94,knee:0.15,warm:0.02,sat:1.08});
   const low=e.id==='sunset';sun.color.setHex(low?0xffa060:0xfff2cc);sun.intensity=low?0.95:0.75;hemi.color.setHex(low?0xffd2b0:0xffffff);hemi.groundColor.setHex(low?0x5a6aa0:0x88b060);
   sunGlow.material.color.setHex(low?0xff9a50:0xfff0c0);sunGlow.scale.setScalar(low?900:620);sunHalo.material.color.setHex(low?0xff8a40:0xffe0a0);
   const curve=new THREE.CatmullRomCurve3(e.pts.map(p=>new THREE.Vector3(p[0]*e.sc,p[1],p[2]*e.sc)),true,'centripetal');
@@ -855,7 +859,7 @@ function frame(now){
   {const q=state==='menu'?S[N-16]:p,low=ev.id==='sunset';sun.target.position.set(q.x,q.y,q.z);sun.position.set(q.x+(low?-110:60),q.y+(low?38:120),q.z+(low?-80:40));
    if(low)sunGlow.position.set(camera.position.x-1100,camera.position.y+130,camera.position.z-800);else sunGlow.position.set(camera.position.x+600,camera.position.y+1200,camera.position.z+400);sunHalo.position.copy(sunGlow.position);
    fxP.tick(dt,camera,renderer.domElement.height);fxA.tick(dt,camera,renderer.domElement.height);}
-  renderer.render(scene,camera);
+  post.render(scene,camera);
   requestAnimationFrame(frame);
 }
 

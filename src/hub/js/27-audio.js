@@ -25,3 +25,8 @@ $('h-wrap').addEventListener('click',e=>{
 },true);
 $('h-b-snd').textContent=SFX.muted?'Sound off':'Sound on';
 $('h-b-snd').addEventListener('click',()=>{SFX.mute(!SFX.muted);$('h-b-snd').textContent=SFX.muted?'Sound off':'Sound on';});
+/* graphics quality, shared with every cabinet: High, Medium (phones start here) or Low (no glow, fastest) */
+{const Q=['high','medium','low'],N={high:'High',medium:'Medium',low:'Low'},label=()=>{$('h-b-gfx').textContent='Graphics: '+N[GFX.quality()];};label();
+ GFX.onQuality((q,auto)=>{label();if(auto)setTimeout(()=>toast('Graphics set to '+N[q]+' to keep things smooth'),mode==='game'?0:10);});
+ $('h-b-gfx').addEventListener('click',()=>{GFX.quality(Q[(Q.indexOf(GFX.quality())+1)%3]);label();SFX.play('select');
+   toast({high:'Graphics: High. Full glow and the smoothest edges',medium:'Graphics: Medium. Glow on, a little lighter',low:'Graphics: Low. Fastest, no glow'}[GFX.quality()]);});}

@@ -319,6 +319,8 @@ const UP={fire:false,cook:0,flip:0,stack:0,fridge:0,siz:null,busy:false,tick:0,d
     [[-15,-12],[15,-13],[16,12],[-16,6],[-4,15],[12,15]].forEach((p,i)=>items.push({v:i%5,x:p[0],y:gy,z:p[1],ry:i*1.3,h:6+i%3}));
     GFX.scatter([1,2,3,4,5].map(n=>'nature/CommonTree_'+n+'.gltf'),items,U,{mat:m=>oMat(0xc8d8b8,{map:m.map,alphaTest:0.5,side:THREE.DoubleSide}),done:()=>stand.forEach(s=>s.visible=false)});
   }
+  /* bump detail for the upstairs-only textures (the shared ones are done in 20e-levels.js) */
+  GFX.bumpAll(U,[[tileTex,0.7],[brickTex,1.4]]);
 }
 const SOFA_UP={x:5.72,z:-2,h:Math.PI/2,stand:[6.55,-2],cam:[4.15,1.95,-2],look:[11,1.25,-2]};
 
@@ -333,7 +335,7 @@ function napTime(){
 function upTick(dt,t){
   if(lvl!==1)return;
   UP.tick-=dt;if(UP.tick<=0){UP.tick=0.25;const a=(hour-6)/24*Math.PI*2,el=Math.sin(a),day=Math.max(0,Math.min(1,(el+0.12)/0.4));UP.day=day;
-    UP.hemi.intensity=0.16+0.26*day;UP.sun.intensity=0.05+0.5*day;UP.sun.color.setHex(day>0.5?0xfff0d8:0xffc898);UP.lamps.forEach(l=>l.intensity=0.95-0.5*day);UP.starM.opacity=0.08+0.8*(1-day);}
+    UP.hemi.intensity=0.12+0.16*day;UP.sun.intensity=0.08+0.7*day;UP.sun.color.setHex(day>0.5?0xfff0d8:0xffc898);UP.lamps.forEach(l=>l.intensity=0.95-0.5*day);UP.starM.opacity=0.08+0.8*(1-day);}
   /* fire */
   UP.fireG.visible=UP.fire;UP.fireL.intensity+=((UP.fire?1.3+Math.sin(t*13)*0.15+Math.sin(t*7.3)*0.12:0)-UP.fireL.intensity)*Math.min(1,dt*6);
   if(UP.fire)UP.flames.forEach((f,i)=>{f.scale.y=0.85+Math.sin(t*(9+i*2.3)+i)*0.2;f.scale.x=f.scale.z=0.9+Math.sin(t*7+i)*0.1;});
