@@ -178,6 +178,7 @@ const CV={bats:[],scr:[],scrI:0,alert:0,rev:0,spin:0,bag:null,bagV:[0,0],combo:0
   const sp=new THREE.SpotLight(0xdfe8ff,1.3,26,0.95,0.6,1.2);sp.position.set(1.5,9,-0.5);sp.target.position.set(1.5,0,-0.5);CG.add(sp,sp.target);
   if(!coarse){sp.castShadow=true;sp.shadow.mapSize.set(1024,1024);sp.shadow.bias=-0.0006;sp.shadow.camera.near=1;sp.shadow.camera.far=16;}
   CV.lights.fall=new THREE.PointLight(0x5fffe0,0.9,9,1.4);CV.lights.fall.position.set(-9,2.4,-6);CG.add(CV.lights.fall);
+  GFX.bumpAll(CG,[[rockT,1.3],[grateT,1.1]]);
 }
 function caveTick(dt,t){
   if(lvl!==2)return;

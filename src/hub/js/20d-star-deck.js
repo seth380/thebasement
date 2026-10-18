@@ -141,6 +141,7 @@ const DK={warp:0,swapped:false,lines:null,planet:null,ptex:null,ring:null,rocks:
   const sp=new THREE.SpotLight(0xeef6ff,0.8,14,1.2,0.7,1.2);sp.position.set(0,DH-0.1,0.5);sp.target.position.set(0,0,0.5);SG.add(sp,sp.target);
   if(!coarse){sp.castShadow=true;sp.shadow.mapSize.set(1024,1024);sp.shadow.bias=-0.0006;sp.shadow.camera.near=0.5;sp.shadow.camera.far=8;}
   DK.lights.helm=new THREE.PointLight(0x38c8ff,0.7,7,1.5);DK.lights.helm.position.set(0,1.6,-4.6);SG.add(DK.lights.helm);
+  GFX.bumpAll(SG,[[floorT,0.9],[wallT,0.6],[ceilT,0.5]]);
 }
 const PLANET_A=['Zor','Bli','Kee','Mo','Vex','Lun','Pip','Quo','Taz','Nim'],PLANET_B=['bo','ria','zz','tron','nia','lax','dle','o'];
 function deckTick(dt,t){

@@ -61,6 +61,10 @@ function frame(now){
     camT.y=floorY(camT.x)+(camT.x>CAVE.x+CAVE.r?1.75:2.3);lookT.y+=fy;}
   const k=camSnap?1:1-Math.exp(-4.5*dt);camSnap=false;
   camera.position.lerp(camT,k);look.lerp(lookT,k);camera.lookAt(look);
+  /* anyone standing between the camera and you (a friend walking past behind you) steps out of view instead of filling the screen */
+  {const cx=camera.position.x,cz=camera.position.z,dx=P.x-cx,dz=P.z-cz,dd=Math.max(0.01,dx*dx+dz*dz),near=(g,x,z)=>{if(!g)return;
+     const qx=x-cx,qz=z-cz,t=(qx*dx+qz*dz)/dd,lat=Math.hypot(qx-t*dx,qz-t*dz),h=(t>-0.2&&t<0.78&&lat<0.8)||qx*qx+qz*qz<0.6;if(g.userData.camHide!==h){g.userData.camHide=h;g.children.forEach(c=>c.visible=!h);}};
+   if(!lvl){npcs.forEach(n=>near(n.b.g,n.x,n.z));if(PET.a)near(PET.a.g,PET.x,PET.z);}NET.peers.forEach(p=>near(p.m.g,p.x,p.z));}
 
   /* what is in reach */
   near=null;
@@ -75,7 +79,7 @@ function frame(now){
   tvL.intensity=0.5+Math.sin(tvT*3.1)*0.06;neonL.intensity=1.0+Math.sin(tvT*17)*0.04;aqL.intensity=0.9+Math.sin(tvT*1.7)*0.06;
   if(toastT>0){toastT-=dt;if(toastT<=0)$('h-toast').textContent='';}
   netFrame(dt);hubAudioTick(dt);petTick(dt);lvTick(dt,tvT);
-  renderer.render(scene,camera);
+  POST.render(scene,camera);
   requestAnimationFrame(frame);
 }
 

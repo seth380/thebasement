@@ -42,7 +42,7 @@ function openGame(i){
     later,cancelLater,every,cancelEvery);}catch(e){console.error('cabinet failed:',e&&e.stack||e);closeGame();toast('That cabinet would not start');return;}
   root.querySelectorAll('[data-exit]').forEach(b=>b.addEventListener('click',closeGame));
   leave.addEventListener('click',closeGame);
-  mode='game';hubAudioQuiet();SFX.play('start');
+  mode='game';hubAudioQuiet();SFX.play('start');POST.free();
 }
 function closeGame(){
   if(!game)return;
