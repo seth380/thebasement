@@ -2,14 +2,20 @@
 const KEYS={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right'};
 let near=null;
 function act(){
+  if(DECO.on){if(DECO.held)decoPlace();return;}
   if(mode==='sit'){stand();return;}
   if(mode==='walk'&&near&&!modal())near.fn();
 }
 window.addEventListener('keydown',e=>{
   if(mode==='game'){if(e.code==='Escape')closeGame();return;}
   if(e.target&&e.target.tagName==='INPUT'){if(e.code==='Enter')closeCustom();return;}
-  if(e.code==='Escape'){if(modal())closeOvers();else if(mode==='custom')closeCustom();return;}
+  if(e.code==='Escape'){if(modal())closeOvers();else if(DECO.on){if(!decoCancel())decoClose();}else if(mode==='custom')closeCustom();return;}
   if(KEYS[e.code]){keys[KEYS[e.code]]=true;e.preventDefault();}
+  /* decorating: B opens and closes it; R and Q turn, C changes colour, X or Delete puts the thing away */
+  else if(e.code==='KeyB'&&!e.repeat&&!modal()&&mode==='walk'){DECO.on?decoClose():decoOpen();}
+  else if(DECO.on&&(e.code==='KeyR'||e.code==='KeyQ')){decoTurn(e.code==='KeyR'?1:-1);}
+  else if(DECO.on&&e.code==='KeyC'&&!e.repeat){decoRecolour();}
+  else if(DECO.on&&(e.code==='KeyX'||e.code==='Delete'||e.code==='Backspace')&&!e.repeat){e.preventDefault();decoPutAway();}
   else if((e.code==='KeyE'||e.code==='Enter'||e.code==='Space')&&!e.repeat){
     if(e.target&&e.target.tagName==='BUTTON'&&e.code!=='KeyE')return;
     e.preventDefault();if(FB.on){FB.kickT=0.3;return;}if(PL.on){if(e.code==='Space')plPlayerShoot();return;}if(mode==='custom')closeCustom();else act();}
@@ -33,7 +39,7 @@ $('h-prompt').addEventListener('click',act);
 let looking=false,camPitch=0.23;
 function unlook(){if(document.pointerLockElement)try{document.exitPointerLock();}catch(e){}}
 $('h-wrap').addEventListener('click',e=>{
-  if(coarse||looking||mode!=='walk'||modal())return;
+  if(coarse||looking||mode!=='walk'||modal()||DECO.on)return;
   const t=e.target;if(t&&t.closest&&t.closest('button,input,.h-panel,.h-over,.h-card'))return;
   try{const r=$('h-view').requestPointerLock();if(r&&r.catch)r.catch(()=>{});}catch(x){}
 });

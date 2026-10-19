@@ -40,6 +40,29 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
 .h-bal{font:900 18px var(--body);font-variant-numeric:tabular-nums}
 #h-shop-list{display:flex;flex-direction:column;gap:6px;max-height:min(52vh,420px);overflow:auto}
 #h-lift-list{display:flex;flex-direction:column;gap:6px;max-height:min(56vh,440px);overflow:auto}
+#h-deco{position:absolute;left:16px;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));max-width:980px;margin:0 auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+#h-deco .h-deco-top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+#h-deco .h-tabs{display:flex;gap:2px;flex-wrap:wrap}
+#h-d-help{font-size:12px;opacity:.8}
+#h-deco-tools{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#h-deco-tools .h-pill:disabled{opacity:.45;cursor:default}
+.h-d-done{background:var(--mint)}
+#h-deco-list{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+.h-dc{flex:none;width:96px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 4px 6px;border:2px solid var(--ink);border-radius:12px;background:#fff;cursor:pointer;font:800 12px/1.15 var(--body);color:var(--ink);text-align:center}
+.h-dc img{width:76px;height:64px;object-fit:contain}
+.h-dc img:not([src]){visibility:hidden}
+.h-dc small{font:900 11px var(--body);opacity:.75;font-variant-numeric:tabular-nums}
+.h-dc[aria-pressed="true"]{background:var(--mint)}.h-dc.h-arm{background:var(--sun)}
+.h-decoing #h-stick{bottom:calc(250px + env(safe-area-inset-bottom,0px))}
+.h-decoing #h-hint{visibility:hidden}
+@media (max-width:620px){
+  #h-deco{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom,0px));padding:8px;gap:6px}
+  .h-dc{width:74px;font-size:11px}.h-dc img{width:58px;height:46px}
+  #h-deco .h-tabs button{padding:4px 7px;font-size:11px}
+  #h-d-help{display:none}#h-deco-tools{justify-content:center;width:100%}#h-deco-tools .h-pill{padding:5px 9px;font-size:12px}
+  .h-decoing #h-btns>*:not(#h-b-deco){display:none}.h-decoing #h-tag{transform:scale(.8);transform-origin:top left}
+  .h-decoing #h-stick{bottom:calc(205px + env(safe-area-inset-bottom,0px));width:96px;height:96px}
+}
 .h-ico{flex:none;font-size:26px;line-height:1;width:34px;text-align:center}.h-home{font:900 11px var(--body);font-style:normal;color:var(--grape);margin-left:4px}.h-star{font-size:16px;padding:4px 9px;color:var(--grape)}
 .h-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:2px solid transparent;border-radius:12px}
 .h-item.h-on{border-color:var(--ink);background:rgba(255,201,40,.25)}
@@ -101,6 +124,7 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
       <button class="h-pill" id="h-b-look" type="button">Change look</button>
       <button class="h-pill" id="h-b-troph" type="button">Trophies</button>
       <button class="h-pill" id="h-b-shop" type="button">Shop</button>
+      <button class="h-pill" id="h-b-deco" type="button" title="Buy things and place them in your base (B)">Decorate</button>
       <button class="h-pill" id="h-b-snd" type="button">Sound on</button>
       <button class="h-pill" id="h-b-gfx" type="button" title="Glow, colour and smoothing. Lower it if things feel slow">Graphics: High</button>
       <button class="h-pill" id="h-b-net" type="button" title="Copy an invite link" hidden></button>
@@ -110,6 +134,23 @@ body{background:var(--room);color:var(--ink);font-family:var(--body);font-weight
     <div id="h-toast"></div>
     <div id="h-stick"><i id="h-knob"></i></div>
     <button id="h-prompt" class="h-sticker" type="button" hidden></button>
+    <div id="h-deco" class="h-sticker" hidden>
+      <div class="h-deco-top">
+        <div class="h-tabs" id="h-deco-tabs" role="tablist"></div>
+        <span class="h-bal" id="h-deco-coins"></span>
+      </div>
+      <div id="h-deco-list"></div>
+      <div class="h-deco-top">
+        <span id="h-d-help"></span>
+        <div id="h-deco-tools">
+          <button class="h-pill" id="h-d-turn" type="button" title="Turn it (R)">⟳ Turn</button>
+          <button class="h-pill" id="h-d-col" type="button" title="Change its colour (C)" hidden>🎨 Colour</button>
+          <button class="h-pill" id="h-d-place" type="button" hidden>✔ Place</button>
+          <button class="h-pill" id="h-d-away" type="button" title="Back to your storage (X)" hidden>📦 Put away</button>
+          <button class="h-pill h-d-done" id="h-d-done" type="button">Done</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <div id="h-custom" class="h-panel h-sticker" hidden>
